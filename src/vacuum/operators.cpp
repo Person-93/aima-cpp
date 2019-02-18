@@ -14,10 +14,6 @@ namespace aima::vacuum {
         }
     }
 
-    std::ostream& operator<<( std::ostream& out, const Location& location ) {
-        return out << '(' << location.x << ',' << location.y << ')';
-    }
-
     bool operator==( Location a, Location b ) noexcept {
         return a.x == b.x && a.y == b.y;
     }
