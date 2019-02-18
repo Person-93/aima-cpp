@@ -1,101 +1,141 @@
 #include <functional>
+#include <chrono>
+#include <thread>
 
-#include "Environment.hpp"
-#include "Percept.hpp"
 #include "Action.hpp"
+#include "Percept.hpp"
+#include "Environment.hpp"
 
+
+using namespace aima::core;
+using namespace aima::util;
 using std::ref;
+using std::lock_guard;
 
-namespace aima::core {
-    const Environment::Agents& Environment::getAgents() const { return agents; }
+const Environment::Agents& Environment::getAgents() const { return agents; }
 
-    bool Environment::addAgent( Agent& agent ) {
-        auto[_, isNew] = agents.insert( agent );
-        if ( isNew ) notifyEnvironmentViews( agent );
-        return isNew;
+bool Environment::addAgent( Agent& agent ) {
+    auto[_, isNew] = agents.insert( agent );
+    if ( isNew ) notifyEnvironmentViews( agent );
+    return isNew;
+}
+
+void Environment::removeAgent( const Agent& agent ) {
+    agents.erase( *const_cast<Agent*>(&agent));
+}
+
+void Environment::addEnvironmentObject( EnvironmentObject& object ) {
+    if ( auto p = dynamic_cast<Agent*>(&object)) addAgent( *p );
+    else objects.insert( object );
+}
+
+void Environment::removeEnvironmentObject( const EnvironmentObject& object ) {
+    if ( auto p = dynamic_cast<const Agent*>(&object)) removeAgent( *p );
+    else objects.erase( *const_cast<EnvironmentObject*> (&object));
+}
+
+void Environment::step() {
+    lock_guard lock( mutex );
+    locklessStep();
+}
+
+void Environment::step( unsigned int n, unsigned int delay ) {
+    stepping = true;
+    if ( delay )
+        for ( int i = 0; i < n && !isDone() && !shouldStop; ++i ) {
+            step();
+            std::this_thread::sleep_for( std::chrono::milliseconds( delay ));
+        }
+    else {
+        lock_guard l( mutex );
+        for ( int  i = 0; i < n && !isDone() && !shouldStop; ++i ) locklessStep();
     }
+    stepping   = false;
+    shouldStop = false;
+}
 
-    void Environment::removeAgent( const Agent& agent ) {
-        agents.erase( *const_cast<Agent*>(&agent));
+void Environment::stepUntilDone( unsigned int delay ) {
+    stepping = true;
+    if ( delay ) {
+        while ( !isDone() && !shouldStop ) {
+            step();
+            std::this_thread::sleep_for( std::chrono::milliseconds( delay ));
+        }
     }
-
-    void Environment::addEnvironmentObject( EnvironmentObject& object ) {
-        if ( auto p = dynamic_cast<Agent*>(&object)) addAgent( *p );
-        else objects.insert( object );
+    else {
+        lock_guard l( mutex );
+        while ( !isDone() && !shouldStop ) locklessStep();
     }
+    stepping   = false;
+    shouldStop = false;
+}
 
-    void Environment::removeEnvironmentObject( const EnvironmentObject& object ) {
-        if ( auto p = dynamic_cast<const Agent*>(&object)) removeAgent( *p );
-        else objects.erase( *const_cast<EnvironmentObject*> (&object));
-    }
+bool Environment::isDone() const {
+    // TODO implement cooperative cancellation of Environment
+    return !std::any_of( agents.cbegin(), agents.cend(), std::mem_fn( &Agent::isAlive ));
+}
 
-    void Environment::step() {
-        std::for_each( agents.begin(), agents.end(),
-                       [ this ]( Agent& agent ) {
-                           if ( agent.isAlive()) {
-                               auto percept = getPerceptSeenBy( agent );
-                               auto action  = agent.execute( *percept );
-                               executeAction( agent, action );
-                               notifyEnvironmentViews( agent, *percept, action );
-                           }
-                       } );
-        createExogenousChange();
-    }
+const ThreadSafeWrapper<double>& Environment::getPerformanceMeasure( const Agent& agent ) {
+    return performanceMeasures[ ref( agent ) ];
+}
 
-    void Environment::step( unsigned int n ) {
-        for ( int i = 0; i < n && !isDone(); ++i ) step();
-    }
+void Environment::addEnvironmentView( EnvironmentView& view ) {
+    views.insert( view );
+}
 
-    void Environment::stepUntilDone() {
-        while ( !isDone()) step();
-    }
+void Environment::removeEnvironmentView( const EnvironmentView& view ) {
+    views.erase( *const_cast<EnvironmentView*>(&view));
+}
 
-    bool Environment::isDone() const {
-        // TODO implement cooperative cancellation of Environment
-        return !std::any_of( agents.cbegin(), agents.cend(), std::mem_fn( &Agent::isAlive ));
-    }
+void Environment::notifyViews( std::string_view message ) {
+    std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
+        view.notify( message );
+    } );
+}
 
-    double Environment::getPerformanceMeasure( const Agent& agent ) {
-        return performanceMeasures[ ref( agent ) ];
-    }
+void Environment::updatePerformanceMeasure( const Agent& agent, double change ) {
+    performanceMeasures[ agent ] += change;
+}
 
-    void Environment::addEnvironmentView( EnvironmentView& view ) {
-        views.insert( view );
-    }
+void Environment::notifyEnvironmentViews( const Agent& agent ) {
+    std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
+        view.agentAdded( agent, *this );
+    } );
+}
 
-    void Environment::removeEnvironmentView( const EnvironmentView& view ) {
-        views.erase( *const_cast<EnvironmentView*>(&view));
-    }
+void Environment::notifyEnvironmentViews( const Agent& agent, const Percept& percept, const Action& action ) {
+    std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
+        view.agentActed( agent, percept, action, *this );
+    } );
+}
 
-    void Environment::notifyViews( std::string_view message ) {
-        std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
-            view.notify( message );
-        } );
-    }
+const Environment::EnvironmentObjects& Environment::getEnvironmentObjects() const {
+    return objects;
+}
 
-    void Environment::updatePerformanceMeasure( const Agent& agent, double change ) {
-        performanceMeasures[ agent ] += change;
-    }
+std::unique_ptr<Percept> Environment::getPerceptSeenBy( const Agent& agent ) {
+    return std::make_unique<Percept>();
+}
 
-    void Environment::notifyEnvironmentViews( const Agent& agent ) {
-        std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
-            view.agentAdded( agent, *this );
-        } );
-    }
+unsigned Environment::getStepCount() const noexcept { return stepCount; }
 
-    void Environment::notifyEnvironmentViews( const Agent& agent, const Percept& percept, const Action& action ) {
-        std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
-            view.agentActed( agent, percept, action, *this );
-        } );
-    }
+void Environment::locklessStep() {
+    std::for_each( agents.begin(), agents.end(),
+                   [ this ]( Agent& agent ) {
+                       if ( agent.isAlive()) {
+                           auto percept = getPerceptSeenBy( agent );
+                           auto action  = agent.execute( *percept );
+                           executeAction( agent, action );
+                           notifyEnvironmentViews( agent, *percept, action );
+                       }
+                   } );
+    createExogenousChange();
+}
 
-    const Environment::EnvironmentObjects& Environment::getEnvironmentObjects() const {
-        return objects;
-    }
+void Environment::stop() { shouldStop = true; }
 
-    std::unique_ptr<Percept> Environment::getPerceptSeenBy( const Agent& agent ) {
-        return std::make_unique<Percept>();
-    }
+bool Environment::isRunning() const { return stepping; }
 
-    unsigned Environment::getStepCount() const noexcept { return stepCount; }
+const Environment::PerformanceMeasures& Environment::getPerformanceMeasures() {
+    return performanceMeasures;
 }

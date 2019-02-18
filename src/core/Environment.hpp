@@ -1,9 +1,11 @@
 #pragma once
 
-#include <set>
-#include <map>
+#include <unordered_set>
+#include <unordered_map>
 #include <memory>
+#include <mutex>
 
+#include "util/ThreadSafeWrapper.hpp"
 #include "Agent.hpp"
 #include "EnvironmentView.hpp"
 
@@ -14,15 +16,19 @@ namespace aima::core {
 
     class Percept;
 
-/** An abstract description of an environment in which agents can perceive and act */
+    /** An environment in which agents can perceive and act */
     class Environment {
-    protected:
-        using Agents              = std::set<std::reference_wrapper<Agent>, Agent::less>;
-        using EnvironmentObjects  = std::set<std::reference_wrapper<EnvironmentObject>, EnvironmentObject::less>;
-        using PerformanceMeasures = std::map<std::reference_wrapper<const Agent>, double, Agent::less>;
-        using EnvironmentViews    = std::set<std::reference_wrapper<EnvironmentView>, EnvironmentView::less>;
-
     public:
+        using Agents              = std::unordered_set<std::reference_wrapper<Agent>, typename Agent::hash>;
+        using EnvironmentObjects  = std::unordered_set<std::reference_wrapper<EnvironmentObject>,
+                                                       EnvironmentObject::hash>;
+        using PerformanceMeasures = std::unordered_map<std::reference_wrapper<const Agent>,
+                                                       util::ThreadSafeWrapper<double>,
+                                                       typename Agent::hash>;
+        using EnvironmentViews    = std::unordered_set<std::reference_wrapper<EnvironmentView>,
+                                                       typename EnvironmentView::hash>;
+
+
         /**
          * @return The agents that exist in the environment
          */
@@ -82,16 +88,21 @@ namespace aima::core {
         void step();
 
         /** Move the environment n time steps forward */
-        void step( unsigned int n );
+        void step( unsigned int n, unsigned int delay = 0 );
 
         /** Step through time until the environment has no more tasks */
-        void stepUntilDone();
+        void stepUntilDone( unsigned int delay = 0 );
+
+        /** Stop moving though time steps */
+        void stop();
 
         /**
          * @return <code>true</code> if the Environment is finished with its current task(s),
          *         <code>false</code> otherwise.
          */
         virtual bool isDone() const;
+
+        bool isRunning() const;
 
         /**
          * Retrieve the performance measure associated with an agent
@@ -100,7 +111,9 @@ namespace aima::core {
          *
          * @return The performance measure associated with the agent
          */
-        double getPerformanceMeasure( const Agent& agent );
+        const util::ThreadSafeWrapper<double>& getPerformanceMeasure( const Agent& agent );
+
+        const PerformanceMeasures& getPerformanceMeasures();
 
         /**
          * Add a view on the environment
@@ -155,11 +168,16 @@ namespace aima::core {
          */
         void notifyEnvironmentViews( const Agent& agent, const Percept& percept, const Action& action );
 
-        unsigned stepCount = 0;
+        unsigned stepCount             = 0;
     private:
+        void locklessStep();
+
         EnvironmentObjects  objects;
         EnvironmentViews    views;
         Agents              agents;
         PerformanceMeasures performanceMeasures;
+        std::mutex          mutex;
+        std::atomic_bool    stepping   = false;
+        std::atomic_bool    shouldStop = false;
     };
 }
