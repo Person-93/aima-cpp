@@ -1,14 +1,33 @@
 #pragma once
 
 #include <iosfwd>
+#include <util/PrintableMixin.hpp>
 
 namespace aima::vacuum {
     enum class LocationState { CLEAN, DIRTY };
-    struct Location { unsigned int x; unsigned int y; };
 
     std::ostream& operator<<( std::ostream& out, LocationState state );
 
-    std::ostream& operator<<( std::ostream& out, const Location& location );
+    struct Location : util::PrintableMixin<Location> {
+        Location() : x( 0 ), y( 0 ) {}
+
+        Location( const Location& ) = default;
+
+        Location( Location&& ) = default;
+
+        Location( unsigned x, unsigned y ) : x( x ), y( y ) {}
+
+        Location& operator=( const Location& ) = default;
+
+        Location& operator=( Location&& ) = default;
+
+        unsigned x;
+        unsigned y;
+
+        void print( std::ostream& out ) const {
+            out << '(' << x << ',' << y << ')';
+        }
+    };
 
     bool operator==( Location a, Location b ) noexcept;
 }
