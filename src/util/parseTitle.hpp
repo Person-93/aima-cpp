@@ -1,13 +1,12 @@
 #pragma once
 
-#include <string>
 #include <boost/core/demangle.hpp>
 #include <unordered_map>
 #include <typeindex>
 
 namespace aima::util {
     template< typename T >
-    const std::string& parseTitle() {
+    std::string_view parseTitle() {
         static std::unordered_map<std::type_index, std::string> titles;
 
         auto typeIndex = std::type_index( typeid( T ));

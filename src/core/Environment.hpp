@@ -3,15 +3,19 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <memory>
+#include <atomic>
 #include <mutex>
+#include <functional>
+#include <string_view>
 
-#include "util/ThreadSafeWrapper.hpp"
+#include "util/ThreadSafeWrapper.hpp" // IWYU pragma: keep
+#include "EnvironmentObject.hpp"
 #include "Agent.hpp"
 #include "EnvironmentView.hpp"
 
-namespace aima::core {
-    class EnvironmentObject;
+// IWYU pragma: no_include "util/UniqueIdMixin.hpp"
 
+namespace aima::core {
     class Action;
 
     class Percept;
@@ -57,7 +61,7 @@ namespace aima::core {
 
         virtual void executeAction( const Agent& agent, const Action& action ) = 0;
 
-        virtual std::unique_ptr<Percept> getPerceptSeenBy( const Agent& agent );
+        virtual std::unique_ptr<Percept> getPerceptSeenBy( const Agent& agent ) = 0;
 
         virtual void createExogenousChange() {}
 

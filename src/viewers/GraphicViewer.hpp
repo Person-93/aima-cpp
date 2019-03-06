@@ -1,12 +1,13 @@
 #pragma once
 
+#include <memory>
 #include <string_view>
 
 #include "core/EnvironmentView.hpp"
 #include "gui/ImGuiWrapper.hpp"
 #include "gui/OutputConsoleWidget.hpp"
 #include "util/ThreadSafeWrapper.hpp"
-#include "SimpleViewer.hpp"
+#include "viewers/SimpleViewer.hpp"
 
 namespace aima::core {
     class Agent;
@@ -14,17 +15,15 @@ namespace aima::core {
     class Percept;
 
     class Action;
+
+    class Environment;
 }
 
 namespace aima::viewer {
-    namespace {
-        using namespace aima::core;
-        using namespace aima::gui;
-    }
     /**
      * A viewer that displays a graphic representation of the environment to the user in a DearImGui window
      */
-    class GraphicViewer : public EnvironmentView {
+    class GraphicViewer : public core::EnvironmentView {
     public:
         /**
          * Constructs the viewer
@@ -32,37 +31,37 @@ namespace aima::viewer {
          * @param title The title of the DearImGui window
          * @param open Will be set to false if the user closes the window
          */
-        GraphicViewer( ImGuiWrapper& gui, const std::string& title, bool* open = nullptr );
+        GraphicViewer( gui::ImGuiWrapper& gui, std::string_view title, bool* open = nullptr );
 
         void notify( std::string_view message ) override;
 
-        void agentAdded( const Agent& agent, const Environment& source ) override;
+        void agentAdded( const core::Agent& agent, const core::Environment& source ) override;
 
-        void agentActed( const Agent& agent,
-                         const Percept& percept,
-                         const Action& action,
-                         const Environment& environment ) override;
+        void agentActed( const core::Agent& agent,
+                         const core::Percept& percept,
+                         const core::Action& action,
+                         const core::Environment& environment ) override;
 
-        virtual void setEnvironment( const std::weak_ptr<Environment>& environment );
+        virtual void setEnvironment( const std::weak_ptr<core::Environment>& environment );
 
         bool render();
 
     protected:
-        virtual void renderDisplay( std::shared_ptr<Environment>& environment ) = 0;
+        virtual void renderDisplay( std::shared_ptr<core::Environment>& environment ) = 0;
 
     private:
-        void renderConsoleArea( std::shared_ptr<Environment>& environment );
+        void renderConsoleArea( std::shared_ptr<core::Environment>& environment );
 
-        void renderButtons( std::shared_ptr<Environment>& environment );
+        void renderButtons( std::shared_ptr<core::Environment>& environment );
 
-        OutputConsoleWidget                       console;
+        gui::OutputConsoleWidget                  console;
         SimpleViewer                              simpleViewer;
-        ImGuiWrapper::WindowConfig                windowConfig;
-        ImGuiWrapper::ChildWindowConfig           consoleAreaConfig;
-        ImGuiWrapper::ChildWindowConfig           scrollingSectionConfig;
-        std::weak_ptr<Environment>                environment;
+        gui::ImGuiWrapper::WindowConfig           windowConfig;
+        gui::ImGuiWrapper::ChildWindowConfig      consoleAreaConfig;
+        gui::ImGuiWrapper::ChildWindowConfig      scrollingSectionConfig;
+        std::weak_ptr<core::Environment>          environment;
         util::ThreadSafeWrapper<std::string_view> runButtonText;
-        ImGuiWrapper& gui;
+        gui::ImGuiWrapper& gui;
         util::ThreadSafeWrapper<bool> scrollConsole;
         bool                          firstRender;
     };

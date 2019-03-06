@@ -1,8 +1,9 @@
-#include <ostream>
-
 #include "Action.hpp"
+#include <string>
 
-using std::ostream;
+// IWYU pragma: no_include <map>
+// used by AttributesMixin
+
 using std::string;
 using std::string_view;
 

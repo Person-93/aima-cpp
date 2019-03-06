@@ -1,10 +1,10 @@
 #include <functional>
 #include <chrono>
 #include <thread>
+#include <algorithm>
 
-#include "Action.hpp"
-#include "Percept.hpp"
-#include "Environment.hpp"
+#include "Environment.hpp" // IWYU pragma: associated
+#include "Percept.hpp" // IWYU pragma: keep
 
 
 using namespace aima::core;
@@ -40,6 +40,7 @@ void Environment::step() {
 }
 
 void Environment::step( unsigned int n, unsigned int delay ) {
+    // TODO implement changing the bools as a guard type class
     stepping = true;
     if ( delay )
         for ( int i = 0; i < n && !isDone() && !shouldStop; ++i ) {
@@ -113,10 +114,6 @@ const Environment::EnvironmentObjects& Environment::getEnvironmentObjects() cons
     return objects;
 }
 
-std::unique_ptr<Percept> Environment::getPerceptSeenBy( const Agent& agent ) {
-    return std::make_unique<Percept>();
-}
-
 unsigned Environment::getStepCount() const noexcept { return stepCount; }
 
 void Environment::locklessStep() {
@@ -124,7 +121,7 @@ void Environment::locklessStep() {
                    [ this ]( Agent& agent ) {
                        if ( agent.isAlive()) {
                            auto percept = getPerceptSeenBy( agent );
-                           auto action  = agent.execute( *percept );
+                           auto& action = agent.execute( *percept );
                            executeAction( agent, action );
                            notifyEnvironmentViews( agent, *percept, action );
                        }

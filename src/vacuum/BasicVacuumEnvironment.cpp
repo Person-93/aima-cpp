@@ -1,7 +1,11 @@
 #include <random>
+#include <stdexcept>
+#include <utility>
+#include <string_view>
 
 #include "core/Percept.hpp"
-#include "BasicVacuumEnvironment.hpp"
+#include "core/Action.hpp"
+#include "BasicVacuumEnvironment.hpp" // IWYU pragma: associated
 #include "LocalVacuumEnvironmentPercept.hpp"
 
 using namespace aima::core;
@@ -36,8 +40,7 @@ BasicVacuumEnvironment::BasicVacuumEnvironment( unsigned int x, unsigned int y )
 std::unique_ptr<Percept> BasicVacuumEnvironment::getPerceptSeenBy( const Agent& agent ) {
     auto location = getAgentLocation( agent );
     auto state    = getLocationState( location );
-    auto p        = new LocalVacuumEnvironmentPercept( location, state );
-    return std::unique_ptr<Percept>( p );
+    return std::make_unique<LocalVacuumEnvironmentPercept>( location, state );
 }
 
 Location BasicVacuumEnvironment::getAgentLocation( const Agent& agent ) const {

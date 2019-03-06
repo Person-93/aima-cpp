@@ -11,24 +11,23 @@ namespace aima::core {
     class Percept;
 
     class Action;
+
+    class Environment;
 }
 
 namespace aima::viewer {
-    namespace {
-        using namespace aima::core;
-    }
-    class SimpleViewer : public EnvironmentView {
+    class SimpleViewer : public core::EnvironmentView {
     public:
         explicit SimpleViewer( std::ostream& out );
 
         void notify( std::string_view message ) override;
 
-        void agentAdded( const Agent& agent, const Environment& source ) override;
+        void agentAdded( const core::Agent& agent, const core::Environment& source ) override;
 
-        void agentActed( const Agent& agent,
-                         const Percept& percept,
-                         const Action& action,
-                         const Environment& environment ) override;
+        void agentActed( const core::Agent& agent,
+                         const core::Percept& percept,
+                         const core::Action& action,
+                         const core::Environment& environment ) override;
 
     private:
         std::ostream& out;

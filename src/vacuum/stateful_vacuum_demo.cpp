@@ -1,7 +1,10 @@
+#include <string>
+
 #include "viewers/SimpleViewer.hpp"
 #include "BasicVacuumEnvironment.hpp"
 #include "StatefulVacuumAgent.hpp"
 #include "stateful_vacuum_demo.hpp"
+#include "util/ThreadSafeWrapper.hpp"
 
 using namespace aima::vacuum;
 using namespace aima::viewer;

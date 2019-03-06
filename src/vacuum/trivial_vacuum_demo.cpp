@@ -1,8 +1,10 @@
-#include <viewers/SimpleViewer.hpp>
+#include <string>
 
+#include "viewers/SimpleViewer.hpp"
 #include "trivial_vacuum_demo.hpp"
-#include "BasicVacuumEnvironment.hpp"
+#include "BasicVacuumEnvironment.hpp" // IWYU pragma: associated
 #include "BasicVacuumAgent.hpp"
+#include "util/ThreadSafeWrapper.hpp"
 
 using namespace aima::vacuum;
 using aima::viewer::SimpleViewer;

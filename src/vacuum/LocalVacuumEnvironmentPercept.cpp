@@ -1,9 +1,15 @@
-#include "LocalVacuumEnvironmentPercept.hpp"
+#include <utility>
+#include <ostream>
 
-aima::vacuum::LocalVacuumEnvironmentPercept::LocalVacuumEnvironmentPercept( aima::vacuum::Location location,
-                                                                aima::vacuum::LocationState locationState ) :
-        agentLocation( location ), agentLocationState( locationState ) {}
+#include "LocalVacuumEnvironmentPercept.hpp" // IWYU pragma: associated
 
-void aima::vacuum::LocalVacuumEnvironmentPercept::print( std::ostream& out ) const {
+// IWYU pragma: no_include "util/PrintableMixin.hpp"
+
+using namespace aima::vacuum;
+
+LocalVacuumEnvironmentPercept::LocalVacuumEnvironmentPercept( Location location, LocationState locationState ) :
+        agentLocation( std::move( location )), agentLocationState( locationState ) {}
+
+void LocalVacuumEnvironmentPercept::print( std::ostream& out ) const {
     out << "AgentLocation=" << agentLocation << ", State=" << agentLocationState;
 }

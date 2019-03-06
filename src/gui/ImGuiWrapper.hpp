@@ -3,8 +3,9 @@
 #include <memory>
 #include <string_view>
 #include <functional>
+#include <string>
 
-#include "imgui.h"
+#include "imgui.h" // IWYU pragma: export
 
 namespace aima::gui {
     /**

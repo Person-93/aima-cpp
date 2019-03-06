@@ -1,6 +1,5 @@
-#include <boost/type_index.hpp>
-
 #include "TrivialVacuumApp.hpp"
+#include "util/parseTitle.hpp"
 
 namespace aima::gui {
     class ImGuiWrapper;

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <core/Percept.hpp>
+#include <iosfwd>
 
-#include "types.hpp"
+#include "core/Percept.hpp"
+#include "vacuum/types.hpp"
 
 namespace aima::vacuum {
     class LocalVacuumEnvironmentPercept : public core::Percept {

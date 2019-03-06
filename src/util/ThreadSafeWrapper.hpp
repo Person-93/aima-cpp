@@ -8,6 +8,17 @@ namespace aima::util {
     struct DirtyReadTag {};
     struct WriteTag {};
 
+    /**
+     * This is a wrapper around an object that is meant to provide thread safe access while allowing
+     * readers non-blocking access. It does this by maintaining two copies of the object.
+     * All writes to the primary copy will eventually be duplicated for the secondary copy.
+     * Reading can be done in two modes: clean read and dirty read.
+     * If another thread is in middle of writing to the object, then a clean read will block until the writer is
+     * finished.
+     * A dirty read will read from whichever copy is currently available. This is guaranteed not to block, but it might
+     * not be up to date
+     * @tparam T
+     */
     template< typename T >
     class ThreadSafeWrapper {
     public:
@@ -42,6 +53,9 @@ namespace aima::util {
                 secondary   = value;
             };
 
+            // If there was an exception in the function that the user passed in, we want to try and sync anyways,
+            // but swallow any exceptions and re-throw the original exception.
+            // If the user's function doesn't throw, but there's an exception while syncing, we just let it bubble up.
             try {
                 if constexpr ( std::is_void_v<U> ) {
                     function( primary );
@@ -171,6 +185,9 @@ namespace aima::util {
             return *this;                                         \
         }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "bugprone-move-forwarding-reference"
+
         ASSIGNMENT_OPERATOR( = )
 
         ASSIGNMENT_OPERATOR( += )
@@ -193,6 +210,7 @@ namespace aima::util {
 
         ASSIGNMENT_OPERATOR( |= )
 
+#pragma clang diagnostic pop
 #undef ASSIGNMENT_OPERATOR
 
     private:

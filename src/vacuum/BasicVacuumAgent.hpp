@@ -1,15 +1,17 @@
 #pragma once
 
 #include <core/Agent.hpp>
+#include <core/Action.hpp>
+
+namespace aima::core {
+    class Percept;
+}
 
 namespace aima::vacuum {
-    namespace {
-        using namespace aima::core;
-    }
     class BasicVacuumAgent : public core::Agent {
     public:
         BasicVacuumAgent() = default;
 
-        const Action& execute( const Percept& percept ) override;
+        const core::Action& execute( const core::Percept& percept ) override;
     };
 }

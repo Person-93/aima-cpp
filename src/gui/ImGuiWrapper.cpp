@@ -1,9 +1,10 @@
-#include <iostream>
 #include <GL/glcorearb.h>
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
+#include <sstream>
+#include <stdexcept>
 
-#include "gui/ImGuiWrapper.hpp"
+#include "ImGuiWrapper.hpp" // IWYU pragma: associated
 #include "imgui_internal.h"
 #include <examples/imgui_impl_opengl3.h>
 #include <examples/imgui_impl_glfw.h>
@@ -16,16 +17,26 @@ constexpr int width  = 1280;
 constexpr int height = 720;
 ImVec4* clear_color = nullptr;
 
+static struct {
+    int error;
+    const char* description;
+} err;
+
 ImGuiWrapper::ImGuiWrapper( std::string_view title ) {
     if ( glfwWindow ) throw std::runtime_error( "There can only be one instance of ImGuiWrapper" );
     if ( !clear_color ) clear_color = new ImVec4{ 0.45f, 0.55f, 0.60f, 1.00f };
 
     // Setup window
     glfwSetErrorCallback( []( int error, const char* description ) {
-        std::cerr << "GLFW Error " << error << ": " << description << std::endl;
+        err.error       = error;
+        err.description = description;
     } );
 
-    if ( !glfwInit()) exit( 1 );
+    if ( !glfwInit()) {
+        std::ostringstream ss;
+        ss << "GLFW Error " << err.error << ": " << err.description << std::endl;
+        throw std::runtime_error( ss.str());
+    }
 
     // GL 3.0 + GLSL 130
     const char* glsl_version = "#version 130";
@@ -36,7 +47,7 @@ ImGuiWrapper::ImGuiWrapper( std::string_view title ) {
 
     // Create window with graphics context
     glfwWindow = glfwCreateWindow( width, height, title.begin(), nullptr, nullptr );
-    if ( glfwWindow == nullptr ) exit( 1 );
+    if ( glfwWindow == nullptr ) throw std::runtime_error( "Unable to create GLFW window" );
     glfwMakeContextCurrent( glfwWindow );
     glfwSwapInterval( 1 ); // Enable vsync
 
@@ -46,9 +57,9 @@ ImGuiWrapper::ImGuiWrapper( std::string_view title ) {
         } version;
         glGetIntegerv( GL_MAJOR_VERSION, &version.major );
         glGetIntegerv( GL_MINOR_VERSION, &version.minor );
-        std::cerr << "Failed to initialize OpenGL loader. Version is: " << version.major << '.' << version.minor
-                  << std::endl;
-        exit( 1 );
+        std::ostringstream ss;
+        ss << "Failed to initialize OpenGL loader. Version is: " << version.major << '.' << version.minor;
+        throw std::runtime_error( ss.str());
     }
 
     // Setup Dear ImGui context

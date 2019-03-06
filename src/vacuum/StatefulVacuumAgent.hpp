@@ -11,21 +11,17 @@
 #include "BasicVacuumEnvironment.hpp"
 
 namespace aima::vacuum {
-    namespace {
-        using namespace core;
-    }
-
     class StatefulVacuumAgent : public core::Agent {
     public:
         StatefulVacuumAgent( unsigned x, unsigned y ) : x( x ), y( y ), state( x, y ) {}
 
-        const Action& execute( const Percept& percept ) override {
+        const core::Action& execute( const core::Percept& percept ) override {
             auto p = dynamic_cast<const LocalVacuumEnvironmentPercept*>(&percept);
             if ( !p ) throw std::out_of_range( "Agent received percept of unrecognized type" );
             auto location = p->agentLocation;
             state( location.x, location.y ) = true;
             if ( p->agentLocationState == LocationState::DIRTY ) return BasicVacuumEnvironment::ACTION_SUCK;
-            if ( allClean()) return Action::noOp();
+            if ( allClean()) return core::Action::noOp();
             if ( location == Location{ 0, 0 } ) return BasicVacuumEnvironment::ACTION_MOVE_RIGHT;
             if ( location == Location{ 1, 0 } ) return BasicVacuumEnvironment::ACTION_MOVE_LEFT;
             else {

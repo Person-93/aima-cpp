@@ -1,15 +1,14 @@
-#include <utility>
 #include <thread>
+#include <ostream>
+#include <string>
 
-#include "core/Agent.hpp"
 #include "core/Environment.hpp"
-#include "core/Percept.hpp"
-#include "core/Action.hpp"
 #include "util/random_string.hpp"
-#include "GraphicViewer.hpp"
+#include "GraphicViewer.hpp" // IWYU pragma: associated
 
 
 using namespace aima::core;
+using namespace aima::gui;
 using namespace ImGui;
 using aima::viewer::GraphicViewer;
 using std::endl;
@@ -23,12 +22,12 @@ float footerHeightToReserve() {
 constexpr std::string_view RUN  = "Run";
 constexpr std::string_view STOP = "Stop";
 
-GraphicViewer::GraphicViewer( ImGuiWrapper& gui, const string& title, bool* open ) :
+GraphicViewer::GraphicViewer( ImGuiWrapper& gui, std::string_view title, bool* open ) :
         console( scrollConsole ),
         simpleViewer( console ),
-        windowConfig{ std::make_shared<string>( title + "##" + util::random_string( 10 )), open },
-        consoleAreaConfig{ std::make_shared<string>( title + "ConsoleSection" ) },
-        scrollingSectionConfig{ std::make_shared<string>( title + "ScrollingSection" ),
+        windowConfig{ std::make_shared<string>( string( title ) + "##" + util::random_string( 10 )), open },
+        consoleAreaConfig{ std::make_shared<string>( string( title ) + "ConsoleSection" ) },
+        scrollingSectionConfig{ std::make_shared<string>( string( title ) + "ScrollingSection" ),
                                 ImVec2( 0, -footerHeightToReserve()), false },
         runButtonText( RUN ),
         gui( gui ),
@@ -36,22 +35,19 @@ GraphicViewer::GraphicViewer( ImGuiWrapper& gui, const string& title, bool* open
         firstRender( false ) {}
 
 void GraphicViewer::notify( std::string_view message ) {
-    console << message << "\n" << endl;
+    simpleViewer.notify( message );
     // TODO flashier notification for GraphicViewer ?
 }
 
 void GraphicViewer::agentAdded( const Agent& agent, const Environment& source ) {
-    console << "Agent " << agent.id() << " added\n" << endl;
+    simpleViewer.agentAdded( agent, source );
 }
 
 void GraphicViewer::agentActed( const Agent& agent,
                                 const Percept& percept,
                                 const Action& action,
                                 const Environment& environment ) {
-    console << "Agent " << agent.id() << " acted.\n"
-            << "Percept: " << percept << "\n"
-            << "Action: " << action << "\n"
-            << endl;
+    simpleViewer.agentActed( agent, percept, action, environment );
 }
 
 void GraphicViewer::setEnvironment( const std::weak_ptr<Environment>& environment ) {
@@ -59,10 +55,9 @@ void GraphicViewer::setEnvironment( const std::weak_ptr<Environment>& environmen
     auto replacement = environment.lock();
     if ( original == replacement ) return;
 
-    bool wasNull = this->environment.lock() == nullptr;
     this->environment = environment;
     replacement->addEnvironmentView( *this );
-    if ( !wasNull ) console << "The environment changed" << std::endl;
+    if ( original != nullptr ) console << "The environment changed" << std::endl;
 }
 
 bool GraphicViewer::render() {
@@ -73,11 +68,8 @@ bool GraphicViewer::render() {
         auto environment = this->environment.lock();
 
         Columns( 2 );
-        // TODO allow user to resize columns
-//        if ( firstRender ) {
         SetColumnWidth( -1, GetWindowWidth() * .4f );
         firstRender = false;
-//        }
         renderConsoleArea( environment );
         NextColumn();
         renderDisplay( environment );
@@ -94,7 +86,7 @@ void GraphicViewer::renderConsoleArea( std::shared_ptr<Environment>& environment
     } );
 }
 
-void aima::viewer::GraphicViewer::renderButtons( std::shared_ptr<Environment>& environment ) {
+void GraphicViewer::renderButtons( std::shared_ptr<Environment>& environment ) {
     if ( SmallButton( "Step" ))
         std::thread( [ this ]( std::shared_ptr<Environment> env ) {
             if ( !env->isRunning())

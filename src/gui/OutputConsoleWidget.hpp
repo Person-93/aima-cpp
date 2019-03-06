@@ -1,16 +1,12 @@
 #pragma once
 
-#include <ostream>
+#include <string>
 #include <sstream>
-#include <atomic>
-#include <shared_mutex>
 
-#include "imgui.h"
 #include "util/ThreadSafeWrapper.hpp"
 #include "gui/ImGuiWrapper.hpp"
 
 namespace aima::gui {
-    class ImGuiWrapper;
     namespace detail {
         using ThreadSafeString = util::ThreadSafeWrapper<std::string>;
         using ThreadSafeBool = util::ThreadSafeWrapper<bool>;

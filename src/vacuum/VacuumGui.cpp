@@ -1,5 +1,9 @@
+#include <stdexcept>
+
 #include "VacuumGui.hpp"
 #include "BasicVacuumEnvironment.hpp"
+#include "core/Environment.hpp"
+#include "gui/ImGuiWrapper.hpp"
 
 using namespace aima::core;
 using namespace aima::vacuum;

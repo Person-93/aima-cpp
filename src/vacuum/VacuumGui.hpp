@@ -1,18 +1,21 @@
 #pragma once
 
+#include <memory>
+
 #include "viewers/GraphicViewer.hpp"
-#include "vacuum/BasicVacuumEnvironment.hpp"
+
+namespace aima::core {
+    class Environment;
+}
 
 namespace aima::vacuum {
-    class BasicVacuumEnvironment;
-
     class VacuumGui : public viewer::GraphicViewer {
         using viewer::GraphicViewer::GraphicViewer;
     public:
-        void setEnvironment( const std::weak_ptr<Environment>& environment ) override;
+        void setEnvironment( const std::weak_ptr<core::Environment>& environment ) override;
 
     protected:
-        void renderDisplay( std::shared_ptr<Environment>& environment ) override;
+        void renderDisplay( std::shared_ptr<core::Environment>& environment ) override;
     };
 }
 
