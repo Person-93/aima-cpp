@@ -39,9 +39,24 @@ void Environment::step() {
     locklessStep();
 }
 
+class aima::core::StepGuard {
+public:
+    explicit StepGuard( Environment& env ) noexcept : env( env ) {
+        env.stepping = true;
+    }
+
+    ~StepGuard() {
+        env.stepping   = false;
+        env.shouldStop = false;
+    }
+
+private:
+    Environment& env;
+};
+
 void Environment::step( unsigned int n, unsigned int delay ) {
-    // TODO implement changing the bools as a guard type class
-    stepping = true;
+    StepGuard g( *this );
+
     if ( delay )
         for ( int i = 0; i < n && !isDone() && !shouldStop; ++i ) {
             step();
@@ -51,12 +66,11 @@ void Environment::step( unsigned int n, unsigned int delay ) {
         lock_guard l( mutex );
         for ( int  i = 0; i < n && !isDone() && !shouldStop; ++i ) locklessStep();
     }
-    stepping   = false;
-    shouldStop = false;
 }
 
 void Environment::stepUntilDone( unsigned int delay ) {
-    stepping = true;
+    StepGuard g( *this );
+
     if ( delay ) {
         while ( !isDone() && !shouldStop ) {
             step();
@@ -67,8 +81,6 @@ void Environment::stepUntilDone( unsigned int delay ) {
         lock_guard l( mutex );
         while ( !isDone() && !shouldStop ) locklessStep();
     }
-    stepping   = false;
-    shouldStop = false;
 }
 
 bool Environment::isDone() const {

@@ -91,10 +91,17 @@ namespace aima::core {
         /** Move the environment one time step forward */
         void step();
 
-        /** Move the environment n time steps forward */
+        /**
+         * Move the environment n time steps forward
+         * @param n The number of steps to move forward
+         * @param delay Number of milliseconds to wait between steps
+         */
         void step( unsigned int n, unsigned int delay = 0 );
 
-        /** Step through time until the environment has no more tasks */
+        /**
+         * Step through time until the environment has no more tasks
+         * @param delay Number of milliseconds to wait between steps
+         */
         void stepUntilDone( unsigned int delay = 0 );
 
         /** Stop moving though time steps */
@@ -175,6 +182,8 @@ namespace aima::core {
         unsigned stepCount             = 0;
     private:
         void locklessStep();
+
+        friend class StepGuard;
 
         EnvironmentObjects  objects;
         EnvironmentViews    views;
