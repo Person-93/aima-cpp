@@ -39,20 +39,22 @@ void Environment::step() {
     locklessStep();
 }
 
-class aima::core::StepGuard {
-public:
-    explicit StepGuard( Environment& env ) noexcept : env( env ) {
-        env.stepping = true;
-    }
+namespace aima::core {
+    class StepGuard {
+    public:
+        explicit StepGuard( Environment& env ) noexcept : env( env ) {
+            env.stepping = true;
+        }
 
-    ~StepGuard() {
-        env.stepping   = false;
-        env.shouldStop = false;
-    }
+        ~StepGuard() {
+            env.stepping   = false;
+            env.shouldStop = false;
+        }
 
-private:
-    Environment& env;
-};
+    private:
+        Environment& env;
+    };
+}
 
 void Environment::step( unsigned int n, unsigned int delay ) {
     StepGuard g( *this );
