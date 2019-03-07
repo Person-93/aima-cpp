@@ -8,11 +8,9 @@
 using namespace aima::core;
 using namespace aima::vacuum;
 
-void VacuumGui::setEnvironment( const std::weak_ptr<Environment>& environment ) {
-    if ( auto p = environment.lock()) {
-        auto q = std::dynamic_pointer_cast<BasicVacuumEnvironment>( p );
-        if ( !q ) throw std::runtime_error( "VacuumGui expects a vacuum environment" );
-    }
+void VacuumGui::setEnvironment( const std::shared_ptr<Environment>& environment ) {
+    auto p = std::dynamic_pointer_cast<BasicVacuumEnvironment>( environment );
+    if ( !p ) throw std::runtime_error( "VacuumGui expects a vacuum environment" );
     GraphicViewer::setEnvironment( environment );
 }
 

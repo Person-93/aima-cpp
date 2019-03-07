@@ -42,7 +42,7 @@ namespace aima::viewer {
                          const core::Action& action,
                          const core::Environment& environment ) override;
 
-        virtual void setEnvironment( const std::weak_ptr<core::Environment>& environment );
+        virtual void setEnvironment( const std::shared_ptr<core::Environment>& environment );
 
         bool render();
 
@@ -50,9 +50,9 @@ namespace aima::viewer {
         virtual void renderDisplay( std::shared_ptr<core::Environment>& environment ) = 0;
 
     private:
-        void renderConsoleArea( std::shared_ptr<core::Environment>& environment );
+        void renderConsoleArea( const std::shared_ptr<core::Environment>& environment );
 
-        void renderButtons( std::shared_ptr<core::Environment>& environment );
+        void renderButtons( const std::shared_ptr<core::Environment>& environment );
 
         gui::OutputConsoleWidget                  console;
         SimpleViewer                              simpleViewer;
