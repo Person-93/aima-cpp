@@ -18,6 +18,7 @@ target_link_libraries ( app PUBLIC imgui viewer_simple Boost::boost )
 add_library ( vacuum STATIC
               vacuum/BasicVacuumEnvironment.cpp
               vacuum/BasicVacuumAgent.cpp
+              vacuum/StatefulVacuumAgent.cpp
               vacuum/LocalVacuumEnvironmentPercept.cpp
               vacuum/operators.cpp
               )
