@@ -16,11 +16,15 @@ const Environment::Agents& Environment::getAgents() const { return agents; }
 
 bool Environment::addAgent( Agent& agent ) {
     auto[_, isNew] = agents.insert( agent );
-    if ( isNew ) notifyEnvironmentViews( agent );
+    if ( isNew ) {
+        performanceMeasures.emplace( agent, 0. );
+        notifyEnvironmentViews( agent );
+    }
     return isNew;
 }
 
 void Environment::removeAgent( const Agent& agent ) {
+    performanceMeasures.erase( agent );
     agents.erase( *const_cast<Agent*>(&agent));
 }
 
