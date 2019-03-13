@@ -1,4 +1,6 @@
 #include <stdexcept>
+#include <sstream>
+#include <iomanip>
 
 #include "VacuumGui.hpp"
 #include "BasicVacuumEnvironment.hpp"
@@ -14,25 +16,46 @@ void VacuumGui::setEnvironment( const std::shared_ptr<Environment>& environment 
     GraphicViewer::setEnvironment( environment );
 }
 
-void renderPerformanceMeasure( const BasicVacuumEnvironment::PerformanceMeasures& environment );
-
-void renderGrid( const BasicVacuumEnvironment::Locations& locations );
-
 void VacuumGui::renderDisplay( std::shared_ptr<Environment>& environment ) {
-    auto env = std::dynamic_pointer_cast<BasicVacuumEnvironment>( environment );
-    if ( !env ) {
+    if ( !environment ) {
         ImGui::Text( "The environment has not been set" );
         return;
     }
+    auto env = std::dynamic_pointer_cast<BasicVacuumEnvironment>( environment );
+    if ( !env ) throw std::runtime_error( "Vacuum Gui got unknown environment type" );
 
-    renderPerformanceMeasure( env->getPerformanceMeasures());
-    renderGrid( env->getLocations());
+    renderPerformanceMeasure( *env );
+    renderGrid( *env );
 }
 
-void renderPerformanceMeasure( const BasicVacuumEnvironment::PerformanceMeasures& environment ) {
-    ImGui::Text( "This is where the scores will be rendered" );
+void VacuumGui::renderPerformanceMeasure( BasicVacuumEnvironment& environment ) {
+    std::ostringstream ss;
+    for ( const auto&[agent, score] : environment.getPerformanceMeasures()) {
+        std::ostringstream inner;
+        inner << "Agent " << agent.get().id() << " score:";
+        ss << '\t'
+           << std::left << std::setw( 15 ) << inner.str()
+           << std::right << std::setw( 5 ) << score.dirtyRead()
+           << '\n';
+    }
+    ss << '\n';
+    ImGui::Text( "%s", ss.str().c_str());
 }
 
-void renderGrid( const BasicVacuumEnvironment::Locations& locations ) {
-    ImGui::Text( "This is where the grid will be rendered" );
+void VacuumGui::renderGrid( BasicVacuumEnvironment& environment ) {
+    auto& locations = environment.getLocations();
+
+    for ( unsigned i = 0; i < locations.size1(); ++i ) {
+        for ( unsigned j = 0; j < locations.size2(); ++j ) {
+            bool agentHere =
+                         environment.getAgentLocation( environment.getAgents().begin().operator*()) == Location{ i, j };
+
+            std::ostringstream ss;
+            ss << locations( i, j );
+            if ( agentHere ) ss << '*';
+            static const ImVec2 size( 60, 60 );
+            ImGui::Button( ss.str().c_str(), size );
+        }
+        ImGui::SameLine();
+    }
 }
