@@ -12,7 +12,7 @@ namespace aima::core {
 namespace aima::vacuum {
     class StatefulVacuumAgent : public core::Agent {
     public:
-        StatefulVacuumAgent( unsigned x, unsigned y );
+        StatefulVacuumAgent( unsigned long x, unsigned long y );
 
         const core::Action& execute( const core::Percept& percept ) override;
 
@@ -20,7 +20,7 @@ namespace aima::vacuum {
         bool allClean();
 
         boost::numeric::ublas::matrix<bool> state;
-        unsigned                            x;
-        unsigned                            y;
+        unsigned long                       x;
+        unsigned long                       y;
     };
 }

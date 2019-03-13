@@ -11,7 +11,7 @@ using aima::vacuum::StatefulVacuumAgent;
 using aima::core::Action;
 using std::out_of_range;
 
-StatefulVacuumAgent::StatefulVacuumAgent( unsigned x, unsigned y ) : x( x ), y( y ), state( x, y ) {}
+StatefulVacuumAgent::StatefulVacuumAgent( unsigned long x, unsigned long y ) : x( x ), y( y ), state( x, y ) {}
 
 const Action& StatefulVacuumAgent::execute( const aima::core::Percept& percept ) {
     auto p = dynamic_cast<const LocalVacuumEnvironmentPercept*>(&percept);
