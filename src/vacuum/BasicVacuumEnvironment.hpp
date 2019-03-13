@@ -1,6 +1,6 @@
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <functional>
 #include <memory>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -27,7 +27,9 @@ namespace aima::vacuum {
      */
     class BasicVacuumEnvironment : public core::Environment {
     public:
-        using AgentLocations = std::map<std::reference_wrapper<const core::Agent>, Location, core::Agent::less>;
+        using AgentLocations = std::unordered_map<std::reference_wrapper<const core::Agent>,
+                                                  Location,
+                                                  core::Agent::hash>;
         using Locations = boost::numeric::ublas::matrix<LocationState>;
 
         static const core::Action ACTION_MOVE_LEFT;
@@ -39,19 +41,23 @@ namespace aima::vacuum {
         /**
          * Construct a vacuum environment with two locations named A and B and dirt is placed at random
          */
-        explicit BasicVacuumEnvironment( unsigned x = 2, unsigned y = 1 );
+        explicit BasicVacuumEnvironment( unsigned long x = 2, unsigned long y = 1 );
 
         std::unique_ptr<core::Percept> getPerceptSeenBy( const core::Agent& agent ) override;
 
-        Location getAgentLocation( const core::Agent& agent ) const;
+        Location getAgentLocation( const core::Agent& agent ) const { return agentLocations.at( agent ); }
 
-        void setAgentLocation( const core::Agent& agent, Location location );
+        const AgentLocations getAgentLocations() const noexcept { return agentLocations; }
+
+        void setAgentLocation( const core::Agent& agent, Location location ) {
+            agentLocations[ agent ] = std::move( location );
+        }
 
         void removeAgent( const core::Agent& agent ) override;
 
         bool isDone() const override;
 
-        const Locations& getLocations() const;
+        const Locations& getLocations() const noexcept { return locations; }
 
         LocationState getLocationState( Location location ) const;
 
@@ -63,22 +69,24 @@ namespace aima::vacuum {
 
         void createExogenousChange() override;
 
-        unsigned getX() noexcept { return x; }
+        unsigned long getX() const { return locations.size1(); }
 
-        unsigned getY() noexcept { return y; }
+        unsigned long getY() const { return locations.size2(); }
 
     protected:
-        Location& getAgentLocationByRef( const core::Agent& agent );
+        Location& getAgentLocationByRef( const core::Agent& agent ) { return agentLocations[ agent ]; }
 
-        bool                  isDone_  = false;
-        AgentLocations        agentLocations;
-        static const unsigned maxSteps = 1000;
+        Location randomLocation() const;
+
+        unsigned maxSteps() const noexcept { return 1000; }
+
+        bool agentStopped() const noexcept { return agentStopped_; }
+
+        void agentStopped( bool stopped ) { agentStopped_ = stopped; }
 
     private:
-        const unsigned                x;
-        const unsigned                y;
-        std::function<unsigned int()> genXCoord;
-        std::function<unsigned int()> genYCoord;
-        Locations                     locations;
+        bool           agentStopped_ = false;
+        Locations      locations;
+        AgentLocations agentLocations;
     };
 }

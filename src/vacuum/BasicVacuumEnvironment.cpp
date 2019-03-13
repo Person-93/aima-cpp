@@ -20,21 +20,14 @@ const Action BasicVacuumEnvironment::ACTION_MOVE_DOWN  = Action( "Down" );
 const Action BasicVacuumEnvironment::ACTION_SUCK       = Action( "Suck" );
 #pragma clang diagnostic pop
 
-BasicVacuumEnvironment::BasicVacuumEnvironment( unsigned int x, unsigned int y )
-        : x( x ), y( y ), locations( x, y ) {
-    using std::bind;
-    using std::mt19937;
-    using std::uniform_int_distribution;
-    std::random_device rd{};
-    static auto        randomBool = bind( uniform_int_distribution( 0, 1 ), // NOLINT(cert-err58-cpp)
-                                          mt19937( rd()));
+BasicVacuumEnvironment::BasicVacuumEnvironment( unsigned long x, unsigned long y )
+        : locations( x, y ) {
+    static auto randomBool = std::bind( std::uniform_int_distribution<uint_fast8_t>( 0, 1 ),
+                                        std::mt19937( std::random_device()()));
 
     for ( unsigned int i = 0; i < x; ++i )
         for ( unsigned int j = 0; j < y; ++j )
             locations( i, j ) = randomBool() ? LocationState::CLEAN : LocationState::DIRTY;
-
-    genXCoord = bind( uniform_int_distribution<>( 0, x - 1 ), mt19937( rd()));
-    genYCoord = bind( uniform_int_distribution<>( 0, y - 1 ), mt19937( rd()));
 }
 
 std::unique_ptr<Percept> BasicVacuumEnvironment::getPerceptSeenBy( const Agent& agent ) {
@@ -43,29 +36,13 @@ std::unique_ptr<Percept> BasicVacuumEnvironment::getPerceptSeenBy( const Agent& 
     return std::make_unique<LocalVacuumEnvironmentPercept>( location, state );
 }
 
-Location BasicVacuumEnvironment::getAgentLocation( const Agent& agent ) const {
-    return agentLocations.at( agent );
-}
-
-void BasicVacuumEnvironment::setAgentLocation( const Agent& agent, Location location ) {
-    agentLocations[ agent ] = std::move( location );
-}
-
-Location& BasicVacuumEnvironment::getAgentLocationByRef( const Agent& agent ) {
-    return agentLocations[ agent ];
-}
-
 void BasicVacuumEnvironment::removeAgent( const Agent& agent ) {
     agentLocations.erase( agent );
     Environment::removeAgent( agent );
 }
 
 bool BasicVacuumEnvironment::isDone() const {
-    return isDone_ || getStepCount() >= maxSteps || Environment::isDone();
-}
-
-const BasicVacuumEnvironment::Locations& BasicVacuumEnvironment::getLocations() const {
-    return locations;
+    return agentStopped() || getStepCount() >= maxSteps() || Environment::isDone();
 }
 
 LocationState BasicVacuumEnvironment::getLocationState( Location location ) const {
@@ -80,7 +57,7 @@ void BasicVacuumEnvironment::setLocationState( Location location, LocationState 
 
 bool BasicVacuumEnvironment::addAgent( Agent& agent ) {
     auto isNew = Environment::addAgent( agent );
-    if ( isNew ) agentLocations[ agent ] = Location( { genXCoord(), genYCoord() } );
+    if ( isNew ) setAgentLocation( agent, randomLocation());
     return isNew;
 }
 
@@ -88,7 +65,7 @@ void BasicVacuumEnvironment::executeAction( const Agent& agent, const Action& ac
     auto& location = getAgentLocationByRef( agent );
 
     if ( action == ACTION_MOVE_DOWN ) {
-        if ( location.y < y - 1 ) {
+        if ( location.y < getY() - 1 ) {
             ++location.y;
             updatePerformanceMeasure( agent, -1 );
         }
@@ -100,7 +77,7 @@ void BasicVacuumEnvironment::executeAction( const Agent& agent, const Action& ac
         }
     }
     else if ( action == ACTION_MOVE_RIGHT ) {
-        if ( location.x < x - 1 ) {
+        if ( location.x < getX() - 1 ) {
             ++location.x;
             updatePerformanceMeasure( agent, -1 );
         }
@@ -111,19 +88,23 @@ void BasicVacuumEnvironment::executeAction( const Agent& agent, const Action& ac
             updatePerformanceMeasure( agent, -1 );
         }
     }
-    else if ( action == ACTION_SUCK ) { locations( location.x, location.y ) = LocationState::CLEAN; }
-    else if ( action == Action::noOp()) { isDone_ = true; }
+    else if ( action == ACTION_SUCK ) { setLocationState( location, LocationState::CLEAN ); }
+    else if ( action == Action::noOp()) { agentStopped( true ); }
     else throw std::out_of_range( "Unrecognized action received" );
 }
 
-
 void BasicVacuumEnvironment::createExogenousChange() {
-    int amount = isDone() ? maxSteps - stepCount : 1;
+    int amount = isDone() ? maxSteps() - stepCount : 1;
     ++stepCount;
-    for ( unsigned i = 0; i < x; ++i )
-        for ( unsigned j = 0; j < y; ++j )
+    for ( unsigned i = 0; i < getX(); ++i )
+        for ( unsigned j = 0; j < getY(); ++j )
             if ( locations( i, j ) == LocationState::CLEAN )
                 for ( Agent& agent: getAgents())
                     updatePerformanceMeasure( agent, amount );
 }
 
+Location BasicVacuumEnvironment::randomLocation() const {
+    static std::mt19937 engine(( std::random_device()()));
+    return Location{ std::uniform_int_distribution<unsigned>( 0, getX() - 1 )( engine ),
+                     std::uniform_int_distribution<unsigned>( 0, getY() - 1 )( engine ) };
+}
