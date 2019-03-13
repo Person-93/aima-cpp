@@ -15,14 +15,14 @@ namespace aima::vacuum {
 
         Location( Location&& ) = default;
 
-        Location( unsigned x, unsigned y ) : x( x ), y( y ) {}
+        Location( unsigned long x, unsigned long y ) : x( x ), y( y ) {}
 
         Location& operator=( const Location& ) = default;
 
         Location& operator=( Location&& ) = default;
 
-        unsigned x;
-        unsigned y;
+        unsigned long x;
+        unsigned long y;
 
         void print( std::ostream& out ) const {
             out << '(' << x << ',' << y << ')';
