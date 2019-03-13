@@ -12,8 +12,6 @@ using namespace aima::util;
 using std::ref;
 using std::lock_guard;
 
-const Environment::Agents& Environment::getAgents() const { return agents; }
-
 bool Environment::addAgent( Agent& agent ) {
     auto[_, isNew] = agents.insert( agent );
     if ( isNew ) {
@@ -94,26 +92,10 @@ bool Environment::isDone() const {
     return !std::any_of( agents.cbegin(), agents.cend(), std::mem_fn( &Agent::isAlive ));
 }
 
-const ThreadSafeWrapper<double>& Environment::getPerformanceMeasure( const Agent& agent ) {
-    return performanceMeasures[ ref( agent ) ];
-}
-
-void Environment::addEnvironmentView( EnvironmentView& view ) {
-    views.insert( view );
-}
-
-void Environment::removeEnvironmentView( const EnvironmentView& view ) {
-    views.erase( *const_cast<EnvironmentView*>(&view));
-}
-
 void Environment::notifyViews( std::string_view message ) {
     std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
         view.notify( message );
     } );
-}
-
-void Environment::updatePerformanceMeasure( const Agent& agent, double change ) {
-    performanceMeasures[ agent ] += change;
 }
 
 void Environment::notifyEnvironmentViews( const Agent& agent ) {
@@ -128,13 +110,9 @@ void Environment::notifyEnvironmentViews( const Agent& agent, const Percept& per
     } );
 }
 
-const Environment::EnvironmentObjects& Environment::getEnvironmentObjects() const {
-    return objects;
-}
-
-unsigned Environment::getStepCount() const noexcept { return stepCount; }
-
 void Environment::locklessStep() {
+    if ( isDone()) return;
+
     std::for_each( agents.begin(), agents.end(),
                    [ this ]( Agent& agent ) {
                        if ( agent.isAlive()) {
@@ -145,12 +123,4 @@ void Environment::locklessStep() {
                        }
                    } );
     createExogenousChange();
-}
-
-void Environment::stop() { shouldStop = true; }
-
-bool Environment::isRunning() const { return stepping; }
-
-const Environment::PerformanceMeasures& Environment::getPerformanceMeasures() {
-    return performanceMeasures;
 }

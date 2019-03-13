@@ -36,7 +36,7 @@ namespace aima::core {
         /**
          * @return The agents that exist in the environment
          */
-        const Agents& getAgents() const;
+        const Agents& getAgents() const { return agents; }
 
         /**
          * @brief Add an agent to the environment.
@@ -66,7 +66,7 @@ namespace aima::core {
         virtual void createExogenousChange() {}
 
         /** @return All of the environment objects that exist in the environment except the agents */
-        const EnvironmentObjects& getEnvironmentObjects() const;
+        const EnvironmentObjects& getEnvironmentObjects() const noexcept { return objects; }
 
         /**
          * Adds an object to the environment
@@ -105,7 +105,7 @@ namespace aima::core {
         void stepUntilDone( unsigned int delay = 0 );
 
         /** Stop moving though time steps */
-        void stop();
+        void stop() noexcept { shouldStop = true; }
 
         /**
          * @return <code>true</code> if the Environment is finished with its current task(s),
@@ -113,7 +113,7 @@ namespace aima::core {
          */
         virtual bool isDone() const;
 
-        bool isRunning() const;
+        bool isRunning() const { return stepping; }
 
         /**
          * Retrieve the performance measure associated with an agent
@@ -122,16 +122,18 @@ namespace aima::core {
          *
          * @return The performance measure associated with the agent
          */
-        const util::ThreadSafeWrapper<double>& getPerformanceMeasure( const Agent& agent );
+        const util::ThreadSafeWrapper<double>& getPerformanceMeasure( const Agent& agent ) const {
+            return performanceMeasures.at( agent );
+        }
 
-        const PerformanceMeasures& getPerformanceMeasures();
+        const PerformanceMeasures& getPerformanceMeasures() const noexcept { return performanceMeasures; }
 
         /**
          * Add a view on the environment
          *
          * @param view
          */
-        virtual void addEnvironmentView( EnvironmentView& view );
+        virtual void addEnvironmentView( EnvironmentView& view ) { views.insert( view ); }
 
         virtual void addEnvironmentView( EnvironmentView&& view ) = delete;
 
@@ -140,7 +142,9 @@ namespace aima::core {
          *
          * @param view
          */
-        virtual void removeEnvironmentView( const EnvironmentView& view );
+        virtual void removeEnvironmentView( const EnvironmentView& view ) {
+            views.erase( *const_cast<EnvironmentView*>(&view));
+        }
 
         /**
          * Notify all registered viewers of a message
@@ -149,7 +153,7 @@ namespace aima::core {
          */
         void notifyViews( std::string_view message );
 
-        unsigned getStepCount() const noexcept;
+        unsigned getStepCount() const noexcept { return stepCount; }
 
         /** Destroy the Environment */
         virtual ~Environment() = default;
@@ -162,7 +166,7 @@ namespace aima::core {
          * @param agent The agent to update
          * @param change The amount to change the performance measure
          */
-        void updatePerformanceMeasure( const Agent& agent, double change );
+        void updatePerformanceMeasure( const Agent& agent, double change ) { performanceMeasures[ agent ] += change; }
 
         /**
          * Notify the views that a new agent was added
