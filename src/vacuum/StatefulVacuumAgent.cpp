@@ -2,18 +2,21 @@
 #include <stdexcept>
 
 #include "StatefulVacuumAgent.hpp"
-#include "core/Percept.hpp"
 #include "LocalVacuumEnvironmentPercept.hpp"
 #include "util/parseTitle.hpp"
 #include "BasicVacuumEnvironment.hpp"
 
 using aima::vacuum::StatefulVacuumAgent;
-using aima::core::Action;
+using namespace aima::core;
 using std::out_of_range;
 
-StatefulVacuumAgent::StatefulVacuumAgent( unsigned long x, unsigned long y ) : x( x ), y( y ), state( x, y ) {}
+StatefulVacuumAgent::StatefulVacuumAgent( unsigned long x, unsigned long y ) : state( x, y ) {
+    for ( size_t i = 0; i < x; ++i )
+        for ( size_t j = 0; j < y; ++j )
+            state( i, j ) = false;
+}
 
-const Action& StatefulVacuumAgent::execute( const aima::core::Percept& percept ) {
+const Action& StatefulVacuumAgent::execute( const Percept& percept ) {
     auto p = dynamic_cast<const LocalVacuumEnvironmentPercept*>(&percept);
     if ( !p ) throw out_of_range( "Agent received percept of unrecognized type" );
 
@@ -32,8 +35,8 @@ const Action& StatefulVacuumAgent::execute( const aima::core::Percept& percept )
 }
 
 bool StatefulVacuumAgent::allClean() {
-    for ( unsigned i = 0; i < x; ++i )
-        for ( unsigned j = 0; j < y; ++j )
+    for ( size_t i = 0, s1 = state.size1(); i < s1; ++i )
+        for ( size_t j = 0, s2 = state.size2(); j < s2; ++j )
             if ( !state( i, j )) return false;
     return true;
 }

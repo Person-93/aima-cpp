@@ -105,6 +105,6 @@ void BasicVacuumEnvironment::createExogenousChange() {
 
 Location BasicVacuumEnvironment::randomLocation() const {
     static std::mt19937 engine(( std::random_device()()));
-    return Location{ std::uniform_int_distribution<unsigned>( 0, getX() - 1 )( engine ),
-                     std::uniform_int_distribution<unsigned>( 0, getY() - 1 )( engine ) };
+    return Location{ std::uniform_int_distribution<unsigned long>( 0, getX() - 1 )( engine ),
+                     std::uniform_int_distribution<unsigned long>( 0, getY() - 1 )( engine ) };
 }

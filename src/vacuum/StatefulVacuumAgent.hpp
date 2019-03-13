@@ -20,7 +20,5 @@ namespace aima::vacuum {
         bool allClean();
 
         boost::numeric::ublas::matrix<bool> state;
-        unsigned long                       x;
-        unsigned long                       y;
     };
 }
