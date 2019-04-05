@@ -1,60 +1,99 @@
-#include <stdexcept>
-#include <sstream>
-#include <iomanip>
-
 #include "VacuumGui.hpp"
-#include "BasicVacuumEnvironment.hpp"
-#include "core/Environment.hpp"
+#include <iomanip>
+#include <functional>
+#include <string>
+#include <boost/numeric/ublas/matrix.hpp>
+#include "vacuum/BasicVacuumEnvironment.hpp"
+#include "core/Agent.hpp"
+#include "core/Exception.hpp"
 #include "gui/ImGuiWrapper.hpp"
+#include "misc.hpp"
+#include "util/parseTitle.hpp"
+#include "util/define_logger.hpp"
+#include "util/StringBuilder.hpp"
+
+// IWYU pragma: no_include <type_traits>
+// IWYU pragma: no_include <unordered_map>
 
 using namespace aima::core;
 using namespace aima::vacuum;
+using std::string_view;
+
+DEFINE_LOGGER( VacuumGui );
+
+VacuumGui::VacuumGui( string_view title, bool* open, string_view str_id ) :
+        GraphicViewer( title, open, str_id ) { TRACE; }
 
 void VacuumGui::setEnvironment( const std::shared_ptr<Environment>& environment ) {
+    TRACE;
     auto p = std::dynamic_pointer_cast<BasicVacuumEnvironment>( environment );
-    if ( !p ) throw std::runtime_error( "VacuumGui expects a vacuum environment" );
+    if ( !p ) {
+        using namespace aima::core::exception;
+        AIMA_THROW_EXCEPTION( Exception{} << EnvironmentViewType( util::parseTitle<VacuumGui>())
+                                          << Because( "Received unrecognized environment" ));
+    }
     GraphicViewer::setEnvironment( environment );
 }
 
-void VacuumGui::renderDisplay( std::shared_ptr<Environment>& environment ) {
+void VacuumGui::renderDisplay( gui::ImGuiWrapper& imGuiWrapper, std::shared_ptr<core::Environment>& environment ) {
+    TRACE;
+
     if ( !environment ) {
         ImGui::Text( "The environment has not been set" );
         return;
     }
+
     auto env = std::dynamic_pointer_cast<BasicVacuumEnvironment>( environment );
-    if ( !env ) throw std::runtime_error( "Vacuum Gui got unknown environment type" );
+    if ( !env ) {
+        using namespace aima::core::exception;
+        AIMA_THROW_EXCEPTION( Exception{} << EnvironmentViewType( util::parseTitle<VacuumGui>())
+                                          << Because( "Received unrecognized environment" ));
+    }
 
     renderPerformanceMeasure( *env );
     renderGrid( *env );
 }
 
+namespace {
+    std::string string( std::string::size_type n ) {
+        std::string s;
+        s.reserve( n );
+        return s;
+    }
+}
+
 void VacuumGui::renderPerformanceMeasure( BasicVacuumEnvironment& environment ) {
+    TRACE;
+
+    std::string        buffer = string( 16 );
     std::ostringstream ss;
     for ( const auto&[agent, score] : environment.getPerformanceMeasures()) {
-        std::ostringstream inner;
-        inner << "Agent " << agent.get().id() << " score:";
         ss << '\t'
-           << std::left << std::setw( 15 ) << inner.str()
+           << std::left << std::setw( 15 )
+           << ( util::StringBuilder( buffer ) << "Agent " << agent.get().id() << " score:" )
            << std::right << std::setw( 5 ) << score.dirtyRead()
            << '\n';
     }
     ss << '\n';
+
     ImGui::Text( "%s", ss.str().c_str());
 }
 
-void VacuumGui::renderGrid( BasicVacuumEnvironment& environment ) {
-    auto& locations = environment.getLocations();
+void VacuumGui::renderGrid( const BasicVacuumEnvironment& environment ) {
+    TRACE;
 
-    for ( unsigned i = 0; i < locations.size1(); ++i ) {
-        for ( unsigned j = 0; j < locations.size2(); ++j ) {
-            bool agentHere =
-                         environment.getAgentLocation( environment.getAgents().begin().operator*()) == Location{ i, j };
+    const auto& locations = environment.getLocations();
+    const auto  agentLocations = environment.getAgentLocationsList();
+    std::string buffer         = string( 8 );
 
-            std::ostringstream ss;
-            ss << locations( i, j );
-            if ( agentHere ) ss << '*';
+    for ( auto i = locations.cbegin1(), end1 = locations.cend1(); i != end1; ++i ) {
+        for ( auto j = i.cbegin(), end2 = i.cend(); j != end2; ++j ) {
+            const bool agentHere = std::binary_search( agentLocations.cbegin(), agentLocations.cend(),
+                                                       Location{ j.index1(), j.index2() }, std::less<Location>{} );
+
             static const ImVec2 size( 60, 60 );
-            ImGui::Button( ss.str().c_str(), size );
+            ImGui::Button( std::string( util::StringBuilder( buffer ) << *j << ( agentHere ? '*' : '\0' )).c_str(),
+                           size );
         }
         ImGui::SameLine();
     }

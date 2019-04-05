@@ -1,10 +1,10 @@
+#include "Environment.hpp"
 #include <functional>
 #include <chrono>
 #include <thread>
 #include <algorithm>
-
-#include "Environment.hpp" // IWYU pragma: associated
-#include "Percept.hpp" // IWYU pragma: keep
+#include "util/define_logger.hpp"
+#include "core/Percept.hpp" // IWYU pragma: keep
 
 
 using namespace aima::core;
@@ -12,7 +12,11 @@ using namespace aima::util;
 using std::ref;
 using std::lock_guard;
 
+DEFINE_LOGGER( Environment );
+
 bool Environment::addAgent( Agent& agent ) {
+    TRACE;
+
     auto[_, isNew] = agents.insert( agent );
     if ( isNew ) {
         performanceMeasures.emplace( agent, 0. );
@@ -22,21 +26,27 @@ bool Environment::addAgent( Agent& agent ) {
 }
 
 void Environment::removeAgent( const Agent& agent ) {
+    TRACE;
+
     performanceMeasures.erase( agent );
     agents.erase( *const_cast<Agent*>(&agent));
 }
 
 void Environment::addEnvironmentObject( EnvironmentObject& object ) {
-    if ( auto p = dynamic_cast<Agent*>(&object)) addAgent( *p );
-    else objects.insert( object );
+    TRACE;
+
+    objects.insert( object );
 }
 
 void Environment::removeEnvironmentObject( const EnvironmentObject& object ) {
-    if ( auto p = dynamic_cast<const Agent*>(&object)) removeAgent( *p );
-    else objects.erase( *const_cast<EnvironmentObject*> (&object));
+    TRACE;
+
+    objects.erase( *const_cast<EnvironmentObject*> (&object));
 }
 
 void Environment::step() {
+    TRACE;
+
     lock_guard lock( mutex );
     locklessStep();
 }
@@ -44,7 +54,7 @@ void Environment::step() {
 namespace aima::core {
     class StepGuard {
     public:
-        explicit StepGuard( Environment& env ) noexcept : env( env ) {
+        explicit StepGuard( Environment& env ) noexcept : env( env ), active( !env.stepping ) {
             env.stepping = true;
         }
 
@@ -55,10 +65,13 @@ namespace aima::core {
 
     private:
         Environment& env;
+        bool active;
     };
 }
 
 void Environment::step( unsigned int n, unsigned int delay ) {
+    TRACE;
+
     StepGuard g( *this );
 
     if ( delay )
@@ -67,12 +80,14 @@ void Environment::step( unsigned int n, unsigned int delay ) {
             std::this_thread::sleep_for( std::chrono::milliseconds( delay ));
         }
     else {
-        lock_guard l( mutex );
+        lock_guard lock( mutex );
         for ( int  i = 0; i < n && !isDone() && !shouldStop; ++i ) locklessStep();
     }
 }
 
 void Environment::stepUntilDone( unsigned int delay ) {
+    TRACE;
+
     StepGuard g( *this );
 
     if ( delay ) {
@@ -82,45 +97,51 @@ void Environment::stepUntilDone( unsigned int delay ) {
         }
     }
     else {
-        lock_guard l( mutex );
+        lock_guard lock( mutex );
         while ( !isDone() && !shouldStop ) locklessStep();
     }
 }
 
 bool Environment::isDone() const {
-    // TODO implement cooperative cancellation of Environment
-    return !std::any_of( agents.cbegin(), agents.cend(), std::mem_fn( &Agent::isAlive ));
+    return !std::any_of( agents.cbegin(), agents.cend(), []( Agent& agent ) { return agent.isAlive(); } );
 }
 
 void Environment::notifyViews( std::string_view message ) {
-    std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
-        view.notify( message );
-    } );
+    TRACE;
+    for ( EnvironmentView& view: views ) view.notify( message );
+}
+
+Environment::~Environment() {
+    TRACE;
+    for ( EnvironmentView& view: views ) view.notify( *this );
 }
 
 void Environment::notifyEnvironmentViews( const Agent& agent ) {
-    std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
-        view.agentAdded( agent, *this );
-    } );
+    TRACE;
+    for ( EnvironmentView& view: views ) view.agentAdded( agent, *this );
 }
 
 void Environment::notifyEnvironmentViews( const Agent& agent, const Percept& percept, const Action& action ) {
-    std::for_each( views.begin(), views.end(), [ & ]( EnvironmentView& view ) {
-        view.agentActed( agent, percept, action, *this );
-    } );
+    TRACE;
+    for ( EnvironmentView& view: views ) view.agentActed( agent, percept, action, *this );
 }
 
 void Environment::locklessStep() {
+    TRACE;
+
     if ( isDone()) return;
 
-    std::for_each( agents.begin(), agents.end(),
-                   [ this ]( Agent& agent ) {
-                       if ( agent.isAlive()) {
-                           auto percept = getPerceptSeenBy( agent );
-                           auto& action = agent.execute( *percept );
-                           executeAction( agent, action );
-                           notifyEnvironmentViews( agent, *percept, action );
-                       }
-                   } );
+    for ( Agent& agent: agents ) {
+        if ( agent.isAlive()) {
+            const auto percept = getPerceptSeenBy( agent );
+            const auto& action = agent.execute( *percept );
+            executeAction( agent, action );
+            notifyEnvironmentViews( agent, *percept, action );
+        }
+    }
     createExogenousChange();
 }
+
+Environment::Environment( const Environment& other ) : objects( other.objects ), agents( other.agents ) { TRACE; }
+
+Environment::Environment() { TRACE; }

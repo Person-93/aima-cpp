@@ -1,7 +1,8 @@
 #pragma once
 
-#include <map>
-#include <ostream>
+#include <unordered_map>  // IWYU pragma: export
+#include <ostream>        // IWYU pragma: export
+#include <string_view>    // IWYU pragma: export
 
 namespace aima::util {
     /**
@@ -10,21 +11,25 @@ namespace aima::util {
      */
     template< class T >
     class AttributesMixin {
+    protected:
         AttributesMixin() = default;
 
-        friend T;
-    public:
+        /**
+         * Attribute names and values should be literal strings or strings with static storage duration
+         * @param name
+         * @param value
+         */
         void setAttribute( std::string_view name, std::string_view value ) {
-            attributes[ std::string( name ) ] = value;
+            attributes.insert( { name, value } );
         }
 
         std::string_view getAttribute( std::string_view name ) const {
-            return attributes.at( std::string( name ));
+            return attributes.at( name );
         }
 
         virtual ~AttributesMixin() = default;
 
-        friend std::ostream& operator<<( std::ostream& out, const T& item ) {
+        friend std::ostream& operator<<( std::ostream& out, const AttributesMixin& item ) {
             out << '[';
             bool first = true;
             for ( const auto&[key, value]: item.attributes ) {
@@ -36,6 +41,6 @@ namespace aima::util {
         }
 
     private:
-        std::map<std::string, std::string> attributes;
+        std::unordered_map<std::string_view, std::string_view> attributes;
     };
 }

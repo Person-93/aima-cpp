@@ -7,13 +7,11 @@
 #include <mutex>
 #include <functional>
 #include <string_view>
-
-#include "util/ThreadSafeWrapper.hpp" // IWYU pragma: keep
+#include "util/ThreadSafeWrapper.hpp"
+#include "util/UniqueIdMixin.hpp" // IWYU pragma: export
 #include "EnvironmentObject.hpp"
 #include "Agent.hpp"
 #include "EnvironmentView.hpp"
-
-// IWYU pragma: no_include "util/UniqueIdMixin.hpp"
 
 namespace aima::core {
     class Action;
@@ -21,17 +19,23 @@ namespace aima::core {
     class Percept;
 
     /** An environment in which agents can perceive and act */
-    class Environment {
+    class Environment : public util::UniqueIdMixin<Environment, true> {
     public:
         using Agents              = std::unordered_set<std::reference_wrapper<Agent>, typename Agent::hash>;
         using EnvironmentObjects  = std::unordered_set<std::reference_wrapper<EnvironmentObject>,
                                                        EnvironmentObject::hash>;
-        using PerformanceMeasures = std::unordered_map<std::reference_wrapper<const Agent>,
-                                                       util::ThreadSafeWrapper<double>,
+        using PerformanceMeasures = std::unordered_map<std::reference_wrapper<const Agent>, util::ThreadSafeDouble,
                                                        typename Agent::hash>;
         using EnvironmentViews    = std::unordered_set<std::reference_wrapper<EnvironmentView>,
                                                        typename EnvironmentView::hash>;
 
+        Environment();
+
+        Environment( Environment&& ) = delete;
+
+        Environment& operator=( Environment&& ) = delete;
+
+        virtual std::unique_ptr<Environment> clone() = 0;
 
         /**
          * @return The agents that exist in the environment
@@ -59,10 +63,23 @@ namespace aima::core {
          */
         virtual void removeAgent( const Agent& agent );
 
+        /**
+         * This method should implement the changes that happen when an agent acts
+         * @param agent The agent that is acting
+         * @param action The action that the agent is performing
+         */
         virtual void executeAction( const Agent& agent, const Action& action ) = 0;
 
+        /**
+         * This method should implement what the agent can perceive in the current state of the environment
+         * @param agent The agent perceiving
+         * @return What the agent perceives
+         */
         virtual std::unique_ptr<Percept> getPerceptSeenBy( const Agent& agent ) = 0;
 
+        /**
+         * This method should implement all changes that are not handled by the executeAction() method
+         */
         virtual void createExogenousChange() {}
 
         /** @return All of the environment objects that exist in the environment except the agents */
@@ -79,7 +96,7 @@ namespace aima::core {
          */
         void addEnvironmentObject( EnvironmentObject& object );
 
-        void addEnvironmentObject( EnvironmentObject&& object ) = delete;
+        void addEnvironmentObject( EnvironmentObject&& ) = delete;
 
         /**
          * Remove an object from the environment
@@ -113,25 +130,31 @@ namespace aima::core {
          */
         virtual bool isDone() const;
 
+        /**
+         * @return <code>true</code> if the environment is currently stepping through time,
+         *         <code>false</code> otherwise.
+         */
         bool isRunning() const { return stepping; }
 
         /**
          * Retrieve the performance measure associated with an agent
          *
          * @param agent The agent for which a performance measure is to be retrieved.
-         *
          * @return The performance measure associated with the agent
          */
         const util::ThreadSafeWrapper<double>& getPerformanceMeasure( const Agent& agent ) const {
             return performanceMeasures.at( agent );
         }
 
+        /**
+         * @return A map of agents to performance measures
+         */
         const PerformanceMeasures& getPerformanceMeasures() const noexcept { return performanceMeasures; }
 
         /**
          * Add a view on the environment
          *
-         * @param view
+         * @param view The view to add
          */
         virtual void addEnvironmentView( EnvironmentView& view ) { views.insert( view ); }
 
@@ -140,7 +163,7 @@ namespace aima::core {
         /**
          * Remove a view on the environment
          *
-         * @param view
+         * @param view The view to remove
          */
         virtual void removeEnvironmentView( const EnvironmentView& view ) {
             views.erase( *const_cast<EnvironmentView*>(&view));
@@ -156,9 +179,19 @@ namespace aima::core {
         unsigned getStepCount() const noexcept { return stepCount; }
 
         /** Destroy the Environment */
-        virtual ~Environment() = default;
+        virtual ~Environment();
 
     protected:
+        /**
+         * Copying the environment only copies the objects and the agents, not the views or the performance measures
+         * This method is intended to help derived classes implement the clone method
+         *
+         * This method is protected to prevent slicing
+         *
+         * @param other The environment to copy
+         */
+        Environment( const Environment& other );
+
         /**
          * Update the performance measure of an agent
          *

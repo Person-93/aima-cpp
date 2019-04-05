@@ -2,6 +2,13 @@
 
 #include <shared_mutex>
 #include <functional>
+#include <string>
+#include <string_view>
+#include <mutex>
+#include <utility>
+#include <type_traits>
+#include <boost/type_traits/has_operator.hpp> // IWYU pragma: keep
+#include "util/type_traits.hpp"               // IWYU pragma: keep
 
 namespace aima::util {
     struct CleanReadTag {};
@@ -22,198 +29,248 @@ namespace aima::util {
     template< typename T >
     class ThreadSafeWrapper {
     public:
-        ThreadSafeWrapper( const T& t ) : primary( t ), secondary( t ) {} // NOLINT(google-explicit-constructor)
+        static_assert( std::is_copy_constructible_v<T> );
+        using type = T;
 
+        explicit ThreadSafeWrapper( const T& t ) : primary( t ), secondary( t ) {}
+
+        template< std::enable_if_t<std::is_move_constructible_v<T>, int> = 0 >
         ThreadSafeWrapper( T&& t ) : // NOLINT(google-explicit-constructor)
                 primary( std::move( t )), secondary( primary ) {}
 
         ThreadSafeWrapper( const ThreadSafeWrapper& other ) : primary( other.cleanRead()), secondary( primary ) {}
 
-        ThreadSafeWrapper( ThreadSafeWrapper&& other ) noexcept( false ) :
+        template< std::enable_if_t<std::is_move_constructible_v<T>, int> = 0 >
+        ThreadSafeWrapper( ThreadSafeWrapper&& other ) noexcept( false ) : // NOLINT(google-explicit-constructor)
                 primary( other.moveRead()), secondary( primary ) {}
 
         template< typename ... Args >
-        explicit ThreadSafeWrapper( Args ... args ): primary( std::forward( args )... ), secondary( primary ) {}
+        explicit ThreadSafeWrapper( Args&& ... args ) : primary( std::forward( args )... ), secondary( primary ) {}
 
-        inline void access( std::function<void( T& )> function ) {
-            this->access<void>( function );
-        }
-
-        template< typename U >
-        U access( std::function<U( T& )> function ) {
-            LockHelper lockForWritingToPrimary( primaryMutex, secondaryMutex );
-
-            bool       triedToSync = false;
-            const auto synchronize = [ & ]() {
-                T value = primary;
-                lockForWritingToPrimary.unlock();
-
-                LockHelper lockForWritingToSecondary( secondaryMutex, primaryMutex );
-                triedToSync = true;
-                secondary   = value;
-            };
-
+        template< typename Function >
+        std::invoke_result_t<Function, T&> access( Function&& function ) {
             // If there was an exception in the function that the user passed in, we want to try and sync anyways,
             // but swallow any exceptions and re-throw the original exception.
             // If the user's function doesn't throw, but there's an exception while syncing, we just let it bubble up.
-            try {
-                if constexpr ( std::is_void_v<U> ) {
-                    function( primary );
-                    synchronize();
-                    return;
+
+            LockHelper lockForWritingToPrimary( primaryMutex, secondaryMutex );
+
+            struct SyncHelper {
+                ~SyncHelper() noexcept( false ) {
+                    try {
+                        T temp = t.primary;
+                        lockForWritingToPrimary.unlock();
+
+                        LockHelper lockForWritingToSecondary( t.secondaryMutex, t.primaryMutex );
+                        if constexpr ( std::is_move_assignable_v<T> ) t.secondary = std::move( temp );
+                        else t.secondary = temp;
+                    }
+                    catch ( ... ) {
+                        if ( std::uncaught_exceptions() == exceptionCount ) throw;
+                    }
                 }
-                else {
-                    U result = function( primary );
-                    synchronize();
-                    return result;
-                }
-            }
-            catch ( ... ) {
-                try {
-                    if ( !triedToSync ) synchronize();
-                }
-                catch ( ... ) {}
-                throw;
-            }
+
+                ThreadSafeWrapper& t;
+                LockHelper       & lockForWritingToPrimary;
+                int exceptionCount = std::uncaught_exceptions();
+            }          syncHelper{ *this, lockForWritingToPrimary };
+
+            return std::forward<Function>( function )( primary );
         }
 
-        template< typename U >
-        U sharedAccessClean( std::function<U( const T& )> function ) const {
+        template< typename Function >
+        std::invoke_result_t<Function, const T&> sharedAccessClean( Function&& function ) const {
             std::shared_lock lock( primaryMutex );
-            return function( primary );
+            return std::forward<Function>( function )( primary );
         }
 
-        template< typename U >
-        U sharedAccessDirty( std::function<U( const T& )> function ) const {
+        template< typename Function >
+        std::invoke_result_t<Function, const T&> sharedAccessDirty( Function function ) const {
             std::shared_lock primaryLock( primaryMutex, std::try_to_lock );
-            if ( primaryLock ) return function( primary );
+            if ( primaryLock ) return std::forward<Function>( function )( primary );
+
             std::shared_lock secondaryLock( secondaryMutex, std::try_to_lock );
-            if ( secondaryLock ) return function( secondary );
+            if ( secondaryLock ) return std::forward<Function>( function )( secondary );
+
             while ( true ) {
-                if ( primaryLock.try_lock()) return function( primary );
-                if ( secondaryLock.try_lock()) return function( secondary );
+                if ( primaryLock.try_lock()) return std::forward<Function>( function )( primary );
+                if ( secondaryLock.try_lock()) return std::forward<Function>( function )( secondary );
             }
         }
 
         T cleanRead() const {
-            return sharedAccessClean( std::function( []( const T& t ) { return t; } ));
+            return sharedAccessClean( []( const T& t ) { return t; } );
         }
 
         T dirtyRead() const {
-            return sharedAccessDirty( std::function( []( const T& t ) { return t; } ));
+            return sharedAccessDirty( []( const T& t ) { return t; } );
         }
 
         T&& moveRead() {
-            return access( [ this ]( T& t ) {
-                return std::move( t );
-            } );
+            struct SyncHelper {
+                ~SyncHelper() try {
+                    LockHelper lock( t.secondaryMutex, t.primaryMutex );
+                    t.secondary = t.primary;
+                }
+                catch ( ... ) {}
+
+                ThreadSafeWrapper& t;
+            } syncHelper{ *this };
+
+            LockHelper lock( primaryMutex, secondaryMutex );
+            return std::move( primary );
         }
 
-        ThreadSafeWrapper& operator++() {
+        template< typename SFINAE = ThreadSafeWrapper& >
+        std::enable_if_t<boost::has_pre_increment<T>::value, SFINAE>
+        operator++() {
             access( []( T& t ) {
                 ++t;
             } );
             return *this;
         }
 
-        ThreadSafeWrapper operator++( int ) const& { // NOLINT(cert-dcl21-cpp)
+        template< typename SFINAE = ThreadSafeWrapper >
+        std::enable_if_t<boost::has_post_increment<T>::value, SFINAE> // NOLINT(cert-dcl21-cpp)
+        operator++( int ) const& {
             return sharedAccessClean( []( const T& t ) {
-                return t++;
+                T temp = t;
+                return ++temp;
             } );
         }
 
-        ThreadSafeWrapper& operator--() {
+        template< typename SFINAE = ThreadSafeWrapper& >
+        std::enable_if_t<boost::has_pre_decrement<T>::value, SFINAE> operator--() {
             access( []( T& t ) {
                 --t;
             } );
             return *this;
         }
 
-        ThreadSafeWrapper operator--( int ) const& { // NOLINT(cert-dcl21-cpp)
+        template< typename SFINAE = ThreadSafeWrapper >
+        std::enable_if_t<boost::has_post_decrement<T>::value, SFINAE> // NOLINT(cert-dcl21-cpp)
+        operator--( int ) const& {
             return sharedAccessClean( []( const T& t ) {
-                return t--;
+                T temp = t;
+                return --temp;
             } );
         }
 
-        template< typename ... Args >
-        auto operator()( Args ... args ) const {
-            return operator()( CleanReadTag{}, std::forward( args )... );
-        }
-
-        template< typename ... Args >
-        auto operator()( CleanReadTag, Args ... args ) const {
-            return sharedAccessClean( [ &args... ]( const T& t ) { t( args... ); } );
-        }
-
-        template< typename ... Args >
-        auto operator()( DirtyReadTag, Args ... args ) const {
-            return sharedAccessDirty( [ &args... ]( const T& t ) { t( args... ); } );
-        }
-
-        template< typename ... Args >
-        auto operator()( WriteTag, Args ... args ) {
-            return access( [ &args... ]( T& t ) { t( args... ); } );
-        }
-
-#define ASSIGNMENT_OPERATOR( OP )                                 \
-        template< typename U >                                    \
-        ThreadSafeWrapper& operator OP ( const ThreadSafeWrapper<U>& other ) {  \
-            access( std::function( [ this, &other ]( T& t ) {     \
-                t OP other.cleanRead();                           \
-            } ));                                                 \
-            return *this;                                         \
-        }                                                         \
-        template< typename U >                                    \
-        ThreadSafeWrapper& operator OP ( ThreadSafeWrapper<U>&& other ) { \
-            access( std::function( [ this, &other ]( T& t ) {     \
-                t OP other.moveRead();                            \
-            } ));                                                 \
-            return *this;                                         \
-        }                                                         \
-        template< typename U >                                    \
-        ThreadSafeWrapper& operator OP ( const U& other ) {       \
-            access( std::function( [ this, &other ]( T& t ) {     \
-                t OP other;                                       \
-            } ));                                                 \
-            return *this;                                         \
-        }                                                         \
-        template< typename U >                                    \
-        ThreadSafeWrapper& operator OP ( U&& other ) {            \
-            access( std::function( [ this, &other ]( T& t ) {     \
-                t OP std::move( other );                          \
-            } ));                                                 \
-            return *this;                                         \
-        }
-
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "bugprone-move-forwarding-reference"
+#pragma ide diagnostic ignored "InfiniteRecursion"
 
-        ASSIGNMENT_OPERATOR( = )
-
-        ASSIGNMENT_OPERATOR( += )
-
-        ASSIGNMENT_OPERATOR( -= )
-
-        ASSIGNMENT_OPERATOR( *= )
-
-        ASSIGNMENT_OPERATOR( /= )
-
-        ASSIGNMENT_OPERATOR( %= )
-
-        ASSIGNMENT_OPERATOR( <<= )
-
-        ASSIGNMENT_OPERATOR( >>= )
-
-        ASSIGNMENT_OPERATOR( &= )
-
-        ASSIGNMENT_OPERATOR( ^= )
-
-        ASSIGNMENT_OPERATOR( |= )
+        template< typename ... Args >
+        auto operator()( Args&& ... args ) const ->
+        std::enable_if_t<!std::is_same_v<CleanReadTag, first_entity<Args...>> &&
+                         !std::is_same_v<DirtyReadTag, first_entity<Args...>> &&
+                         !std::is_same_v<WriteTag, first_entity<Args...>> &&
+                         std::is_invocable_v<const T&, Args...>,
+                         decltype( callType( std::forward( args )... ))> {
+            return operator()( CleanReadTag{}, std::forward<Args>( args )... );
+        }
 
 #pragma clang diagnostic pop
+
+        template< typename ... Args >
+        auto operator()( CleanReadTag, Args&& ... args ) const ->
+        std::enable_if_t<std::is_invocable_v<const T&, Args...>, decltype( callType( std::forward<Args>( args )... ))> {
+            return sharedAccessClean( [ & ]( const T& t ) { t( std::forward<Args>( args )... ); } );
+        }
+
+        template< typename ... Args >
+        auto operator()( DirtyReadTag, Args&& ... args ) const ->
+        std::enable_if_t<std::is_invocable_v<const T&, Args...>, decltype( callType( std::forward<Args>( args )... ))> {
+            return sharedAccessDirty( [ & ]( const T& t ) { t( std::forward<Args>( args )... ); } );
+        }
+
+        template< typename ... Args >
+        auto operator()( WriteTag, Args&& ... args ) ->
+        std::enable_if_t<std::is_invocable_v<T&, Args...>,
+                         decltype( callTypeMutable( std::forward<Args>( args )... ))> {
+            return access( [ & ]( T& t ) { t( std::forward<Args>( args )... ); } );
+        }
+
+        explicit operator T() const { return cleanRead(); }
+
+#define ASSIGNMENT_OPERATOR( OP, SFINAE )                    \
+        template< typename U >                               \
+        std::enable_if_t<SFINAE<T, const U&>::value, ThreadSafeWrapper&> \
+        inline operator OP ( const U& other ) {              \
+            access( [ & ]( T& t ) {                          \
+                t OP other;                                  \
+            } );                                             \
+            return *this;                                    \
+        }                                                    \
+        template< typename U >                               \
+        std::enable_if_t<not SFINAE<T&, const U&>::value, ThreadSafeWrapper&> \
+        inline operator OP ( const U& other ) = delete;      \
+        template< typename U >                               \
+        std::enable_if_t<SFINAE<T&, U&&>::value, ThreadSafeWrapper&> \
+        operator OP ( U&& other ) {                          \
+            access( [ & ]( T& t ) {                          \
+                t OP other;                                  \
+            } );                                             \
+            return *this;                                    \
+        }                                                    \
+        template< typename U >                               \
+        std::enable_if_t<SFINAE<T&, const U&>::value, ThreadSafeWrapper&> \
+        inline operator OP ( const ThreadSafeWrapper<U>& other ) {        \
+            access( [ & ]( T& t ) {                          \
+                t OP other.cleanRead();                      \
+            } );                                             \
+            return *this;                                    \
+        }                                                    \
+        template< typename U >                               \
+        std::enable_if_t<not SFINAE<T&, const U&>::value, ThreadSafeWrapper&> \
+        inline operator OP ( const ThreadSafeWrapper<U>& other ) = delete;    \
+        template< typename U >                               \
+        std::enable_if_t<SFINAE<T&, U&&>::value, ThreadSafeWrapper&> \
+        inline operator OP ( ThreadSafeWrapper<U>&& other ) {        \
+            access( [ & ]( T& t ) {                          \
+                t OP other.moveRead();                       \
+            } );                                             \
+            return *this;                                    \
+        }
+
+        ASSIGNMENT_OPERATOR( // NOLINT(cppcoreguidelines-c-copy-assignment-signature,misc-unconventional-assign-operator)
+                =,
+                std::is_assignable )
+
+        ASSIGNMENT_OPERATOR( +=, boost::has_plus_assign )
+
+        ASSIGNMENT_OPERATOR( -=, boost::has_minus_assign )
+
+        ASSIGNMENT_OPERATOR( *=, boost::has_multiplies_assign )
+
+        ASSIGNMENT_OPERATOR( /=, boost::has_divides_assign )
+
+        ASSIGNMENT_OPERATOR( %=, boost::has_modulus_assign )
+
+        ASSIGNMENT_OPERATOR( <<=, boost::has_left_shift_assign )
+
+        ASSIGNMENT_OPERATOR( >>=, boost::has_right_shift_assign )
+
+        ASSIGNMENT_OPERATOR( &=, boost::has_bit_and_assign )
+
+        ASSIGNMENT_OPERATOR( ^=, boost::has_bit_xor_assign )
+
+        ASSIGNMENT_OPERATOR( |=, boost::has_bit_or_assign )
+
 #undef ASSIGNMENT_OPERATOR
 
     private:
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "NotImplementedFunctions"
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
+        template< typename ... Args >
+        static auto callType( const T& t, Args&& ... args ) -> decltype( t( std::forward<Args>( args )... ));
+
+        template< typename ... Args >
+        static auto callTypeMutable( T& t, Args&& ... args ) -> decltype( t( std::forward<Args>( args )... ));
+
+#pragma clang diagnostic pop
+
         class LockHelper {
         public:
             LockHelper( std::shared_mutex& writtenTo, std::shared_mutex& heldOpen )
@@ -228,9 +285,7 @@ namespace aima::util {
                 locked = false;
             }
 
-            ~LockHelper() {
-                if ( locked ) unlock();
-            }
+            ~LockHelper() { if ( locked ) unlock(); }
 
         private:
             std::shared_mutex& writtenTo;
@@ -247,7 +302,7 @@ namespace aima::util {
 
 #define BINARY_OPERATOR( OP )                                     \
     template< typename T, typename U >                            \
-    auto operator OP ( const ThreadSafeWrapper<T>& a, const ThreadSafeWrapper<U>& b ) { \
+    auto operator OP ( const ThreadSafeWrapper<T>& a, const ThreadSafeWrapper<U>& b ) -> decltype( a OP b ) { \
         return a.sharedAccessClean( [ &b ]( auto& aUnpacked ) {   \
             return b.sharedAccessClean( [ &aUnpacked ]( auto& bUnpacked ) { \
                 return aUnpacked OP bUnpacked;                    \
@@ -255,7 +310,7 @@ namespace aima::util {
         } );                                                      \
     }                                                             \
     template< typename T, typename U >                            \
-    auto operator OP ( const ThreadSafeWrapper<T>& a, const U& b ) { \
+    auto operator OP ( const ThreadSafeWrapper<T>& a, const U& b ) -> decltype( a OP b ) { \
         return a.sharedAccessClean( [ &b ]( auto& a ) {           \
             return a OP b;                                        \
         } );                                                      \
@@ -294,4 +349,21 @@ namespace aima::util {
     BINARY_OPERATOR( >> )
 
 #undef BINARY_OPERATOR
+
+    extern template
+    class ThreadSafeWrapper<std::string>;
+
+    extern template
+    class ThreadSafeWrapper<std::string_view>;
+
+    extern template
+    class ThreadSafeWrapper<bool>;
+
+    extern template
+    class ThreadSafeWrapper<double>;
+
+    using ThreadSafeString     = ThreadSafeWrapper<std::string>;
+    using ThreadSafeStringView = ThreadSafeWrapper<std::string_view>;
+    using ThreadSafeBool       = ThreadSafeWrapper<bool>;
+    using ThreadSafeDouble     = ThreadSafeWrapper<double>;
 }

@@ -1,16 +1,22 @@
+#include "ImGuiWrapper.hpp" // IWYU pragma: associated
 #include <GL/glcorearb.h>
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
-#include <sstream>
-#include <stdexcept>
-
-#include "ImGuiWrapper.hpp" // IWYU pragma: associated
+#include "core/Exception.hpp"
 #include "imgui_internal.h"
 #include <examples/imgui_impl_opengl3.h>
 #include <examples/imgui_impl_glfw.h>
+#include "util/define_logger.hpp"
 
+
+class ChildWindow;
+class MainMenu;
+class Menu;
+class Window;
 
 using namespace aima::gui;
+
+DEFINE_LOGGER( ImGuiWrapper );
 
 GLFWwindow* glfwWindow = nullptr;
 constexpr int width  = 1280;
@@ -23,7 +29,12 @@ static struct {
 } err;
 
 ImGuiWrapper::ImGuiWrapper( std::string_view title ) {
-    if ( glfwWindow ) throw std::runtime_error( "There can only be one instance of ImGuiWrapper" );
+    TRACE;
+
+    if ( glfwWindow ) {
+        using namespace aima::core::exception;
+        AIMA_THROW_EXCEPTION( Exception{} << Because( "There can only be one instance of ImGuiWrapper" ));
+    }
     if ( !clear_color ) clear_color = new ImVec4{ 0.45f, 0.55f, 0.60f, 1.00f };
 
     // Setup window
@@ -34,8 +45,10 @@ ImGuiWrapper::ImGuiWrapper( std::string_view title ) {
 
     if ( !glfwInit()) {
         std::ostringstream ss;
-        ss << "GLFW Error " << err.error << ": " << err.description << std::endl;
-        throw std::runtime_error( ss.str());
+        ss << "GLFW Error " << err.error << ": " << err.description;
+
+        using namespace aima::core::exception;
+        AIMA_THROW_EXCEPTION( Exception{} << Because( ss.str()));
     }
 
     // GL 3.0 + GLSL 130
@@ -47,7 +60,11 @@ ImGuiWrapper::ImGuiWrapper( std::string_view title ) {
 
     // Create window with graphics context
     glfwWindow = glfwCreateWindow( width, height, title.begin(), nullptr, nullptr );
-    if ( glfwWindow == nullptr ) throw std::runtime_error( "Unable to create GLFW window" );
+    if ( glfwWindow == nullptr ) {
+        using namespace aima::core::exception;
+        AIMA_THROW_EXCEPTION( Exception{} << Because( "Unable to create GLFW window" ));
+    }
+
     glfwMakeContextCurrent( glfwWindow );
     glfwSwapInterval( 1 ); // Enable vsync
 
@@ -59,7 +76,9 @@ ImGuiWrapper::ImGuiWrapper( std::string_view title ) {
         glGetIntegerv( GL_MINOR_VERSION, &version.minor );
         std::ostringstream ss;
         ss << "Failed to initialize OpenGL loader. Version is: " << version.major << '.' << version.minor;
-        throw std::runtime_error( ss.str());
+
+        using namespace aima::core::exception;
+        AIMA_THROW_EXCEPTION( Exception{} << Because( ss.str()));
     }
 
     // Setup Dear ImGui context
@@ -75,6 +94,8 @@ ImGuiWrapper::ImGuiWrapper( std::string_view title ) {
 }
 
 ImGuiWrapper::~ImGuiWrapper() {
+    TRACE;
+
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -86,13 +107,19 @@ ImGuiWrapper::~ImGuiWrapper() {
 }
 
 ImGuiWrapper::Frame ImGuiWrapper::frame() {
+    TRACE;
     return ImGuiWrapper::Frame();
 }
 
 bool inFrame = false;
 
 ImGuiWrapper::Frame::Frame() {
-    if ( inFrame ) throw std::runtime_error( "Frame already started" );
+    TRACE;
+
+    if ( inFrame ) {
+        using namespace aima::core::exception;
+        AIMA_THROW_EXCEPTION( Exception{} << Because( "Cannot start new frame until previous frame is completed" ));
+    }
     inFrame = true;
 
     // Poll and handle events (inputs, window resize, etc.)
@@ -109,6 +136,8 @@ ImGuiWrapper::Frame::Frame() {
 }
 
 ImGuiWrapper::Frame::~Frame() {
+    TRACE;
+
     // Rendering
     ImGui::Render();
     int display_w, display_h;
@@ -130,6 +159,7 @@ class widget {                               \
 public:                                      \
     CONSTRUCTORS                             \
     ~widget() {                              \
+    TRACE;                                   \
         if( AlwaysClose || opened ) close(); \
     }                                        \
     operator bool() { return opened; }       \
@@ -138,6 +168,7 @@ private:                                     \
 }
 
 #define CONSTRUCTORS Window(std::string_view title, bool* open, ImGuiWindowFlags flags) { \
+    TRACE;                                             \
     opened = ImGui::Begin(title.begin(), open, flags); \
 }
 
@@ -146,47 +177,94 @@ WIDGET( Window, ImGui::End, true );
 #undef CONSTRUCTORS
 
 bool ImGuiWrapper::window( WindowConfig& config, std::function<void()> function ) {
-    Window w( config.title->c_str(), config.open, config.flags );
+    TRACE;
+
+    Window w( config.title.c_str(), config.open, config.flags );
     if ( w ) function();
     return w;
 }
 
 bool ImGuiWrapper::shouldClose() {
+    TRACE;
     return bool( glfwWindowShouldClose( glfwWindow ));
 }
 
 #define CONSTRUCTORS ChildWindow(std::string_view str_id, const ImVec2& size, bool border, ImGuiWindowFlags flags) { \
+    TRACE;\
     opened = ImGui::BeginChild( str_id.begin(), size, border, flags ); \
 }
 
 WIDGET( ChildWindow, ImGui::EndChild, true );
 
 #undef CONSTRUCTORS
-#undef WIDGET
 
 bool ImGuiWrapper::childWindow( ChildWindowConfig& config, std::function<void()> function ) {
-    ChildWindow w( config.str_id->c_str(), config.size, config.border, config.flags );
+    TRACE;
+
+    ChildWindow w( config.str_id.c_str(), config.size, config.border, config.flags );
     if ( w ) function();
     return w;
 }
 
 void ImGuiWrapper::setWindowTitle( std::string_view title ) {
+    TRACE;
+    LOG4CPLUS_INFO( GetLogger(), "Window title was set to " << title );
     glfwSetWindowTitle( glfwWindow, title.begin());
 }
 
 ImGuiWrapper::DisableControls ImGuiWrapper::disableControls( bool disable ) {
+    TRACE;
     return ImGuiWrapper::DisableControls( disable );
 }
 
+#define CONSTRUCTORS MainMenu() {       \
+    TRACE;                              \
+    opened = ImGui::BeginMainMenuBar(); \
+}
+
+WIDGET( MainMenu, ImGui::EndMainMenuBar, false );
+
+bool ImGuiWrapper::mainMenu( std::function<void()> function ) {
+    TRACE;
+    MainMenu m;
+    if ( m ) function();
+    return m;
+}
+
+#undef CONSTRUCTORS
+#define CONSTRUCTORS Menu( std::string_view label, bool enabled ) { \
+    TRACE;                                                          \
+    opened = ImGui::BeginMenu( label.begin(), enabled );            \
+}
+
+WIDGET( Menu, ImGui::EndMenu, false );
+
+void ImGuiWrapper::menu( std::string_view label, bool enabled, std::function<void()> function ) {
+    TRACE;
+    Menu m( label, enabled );
+    if ( m ) function();
+}
+
+#undef CONSTRUCTORS
+#undef WIDGET
+
+void ImGuiWrapper::menuItem( std::string_view label, bool selected, bool enabled, std::function<void()> function ) {
+    TRACE;
+    if ( ImGui::MenuItem( label.begin(), nullptr, selected, enabled )) function();
+}
+
 ImGuiWrapper::DisableControls::DisableControls( bool disable ) : disabled( false ) {
+    TRACE;
     if ( disable ) this->disable();
 }
 
 ImGuiWrapper::DisableControls::~DisableControls() {
+    TRACE;
     enable();
 }
 
 void ImGuiWrapper::DisableControls::disable() {
+    TRACE;
     if ( !disabled ) {
         ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
         ImGui::PushStyleVar( ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f );
@@ -195,9 +273,16 @@ void ImGuiWrapper::DisableControls::disable() {
 }
 
 void ImGuiWrapper::DisableControls::enable() {
+    TRACE;
     if ( disabled ) {
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
         disabled = false;
     }
+}
+
+#include "imgui_config.hpp"
+
+log4cplus::Logger& aima::gui::detail::GetLogger() {
+    return ::GetLogger();
 }

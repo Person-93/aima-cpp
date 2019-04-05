@@ -1,13 +1,24 @@
 #pragma once
 
-#include <memory>
 #include <string_view>
 #include <functional>
 #include <string>
-
 #include "imgui.h" // IWYU pragma: export
 
 namespace aima::gui {
+    struct WindowConfig {
+        std::string title;
+        bool* open = nullptr;
+        ImGuiWindowFlags flags = 0;
+    };
+
+    struct ChildWindowConfig {
+        std::string      str_id;
+        ImVec2           size;
+        bool             border;
+        ImGuiWindowFlags flags;
+    };
+
     /**
      * An RAII class to initialize and shutdown ImGui
      */
@@ -33,20 +44,7 @@ namespace aima::gui {
 
         Frame frame();
 
-        struct WindowConfig {
-            std::shared_ptr<std::string> title;
-            bool* open = nullptr;
-            ImGuiWindowFlags flags = 0;
-        };
-
         bool window( WindowConfig& config, std::function<void()> function );
-
-        struct ChildWindowConfig {
-            std::shared_ptr<std::string> str_id;
-            ImVec2                       size;
-            bool                         border;
-            ImGuiWindowFlags             flags;
-        };
 
         bool childWindow( ChildWindowConfig& config, std::function<void()> function );
 
@@ -68,7 +66,13 @@ namespace aima::gui {
         };
 
         DisableControls disableControls( bool disable = true );
+
+        bool mainMenu( std::function<void()> function );
+
+        void menu( std::string_view label, bool enabled, std::function<void()> function );
+
+        void menuItem( std::string_view label, bool selected, bool enabled, std::function<void()> function );
     };
+
+
 }
-
-

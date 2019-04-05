@@ -16,8 +16,14 @@ namespace aima::core {
 }
 
 namespace aima::viewer {
+    /**
+     * This method represents a simple viewer that prints all of its notifications to a <code>std::ostream</code>.
+     */
     class SimpleViewer : public core::EnvironmentView {
     public:
+        /**
+         * @param out The ostream to send messages to
+         */
         explicit SimpleViewer( std::ostream& out );
 
         void notify( std::string_view message ) override;
@@ -30,6 +36,6 @@ namespace aima::viewer {
                          const core::Environment& environment ) override;
 
     private:
-        std::ostream& out;
+        std::ostream* out;
     };
 }

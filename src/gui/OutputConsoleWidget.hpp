@@ -2,18 +2,22 @@
 
 #include <string>
 #include <sstream>
-
 #include "util/ThreadSafeWrapper.hpp"
-#include "gui/ImGuiWrapper.hpp"
+
 
 namespace aima::gui {
     namespace detail {
-        using ThreadSafeString = util::ThreadSafeWrapper<std::string>;
-        using ThreadSafeBool = util::ThreadSafeWrapper<bool>;
-
         class OutputConsoleBuffer : public std::stringbuf {
         public:
-            explicit OutputConsoleBuffer( ThreadSafeBool& outputPastDisplay, ThreadSafeString& display );
+            OutputConsoleBuffer( util::ThreadSafeBool& outputPastDisplay, util::ThreadSafeString& display );
+
+            OutputConsoleBuffer( OutputConsoleBuffer& ) = delete;
+
+            OutputConsoleBuffer( OutputConsoleBuffer&& ) noexcept( false ) = default;
+
+            OutputConsoleBuffer& operator=( OutputConsoleBuffer& ) = delete;
+
+            OutputConsoleBuffer& operator=( OutputConsoleBuffer&& ) noexcept( false ) = default;
 
             void clear();
 
@@ -21,22 +25,48 @@ namespace aima::gui {
             int sync() override;
 
         private:
-            ThreadSafeString& display;
-            ThreadSafeBool  & outputPastDisplay;
+            util::ThreadSafeString* display;
+            util::ThreadSafeBool  * outputPastDisplay;
         };
     }
 
+    struct ImGuiWrapper;
+    struct ChildWindowConfig;
+
+    /**
+     * Represents a console-like widget that can be used for output.
+     *
+     * This class extends std::ostream, stream insertion can be used to display information in the widget.
+     */
     class OutputConsoleWidget : public std::ostream {
     public:
-        explicit OutputConsoleWidget( util::ThreadSafeWrapper<bool>& outputPastDisplay );
+        OutputConsoleWidget();
 
-        bool render( ImGuiWrapper& gui, ImGuiWrapper::ChildWindowConfig& config, bool scrollEnabled );
+        OutputConsoleWidget( OutputConsoleWidget& ) = delete;
 
+        OutputConsoleWidget( OutputConsoleWidget&& other ) noexcept( false );
+
+        OutputConsoleWidget& operator=( OutputConsoleWidget& ) = delete;
+
+        OutputConsoleWidget& operator=( OutputConsoleWidget&& other ) noexcept( false );
+
+        /**
+         * Renders the console.
+         * @param gui Reference to ImGuiWrapper
+         * @param config The window configuration
+         * @param scrollEnabled Should the console auto-scroll if text was added?
+         * @return
+         */
+        bool render( ImGuiWrapper& gui, ChildWindowConfig& config, bool scrollEnabled );
+
+        /**
+         * Erase all the text from the console
+         */
         void clear();
 
     private:
-        detail::ThreadSafeString    display;
+        util::ThreadSafeString      display;
+        util::ThreadSafeBool        outputPastDisplay;
         detail::OutputConsoleBuffer buffer;
-        util::ThreadSafeWrapper<bool>& outputPastDisplay;
     };
 }

@@ -4,10 +4,10 @@
 #include <functional>
 #include <memory>
 #include <boost/numeric/ublas/matrix.hpp>
-
-#include "core/Environment.hpp"
+#include <vector>
+#include "core/Environment.hpp" // IWYU pragma: export
 #include "core/Agent.hpp"
-#include "vacuum/types.hpp"
+#include "misc.hpp"
 
 // IWYU pragma: no_include <boost/numeric/ublas/functional.hpp>
 // IWYU pragma: no_include <boost/numeric/ublas/storage.hpp>
@@ -43,15 +43,17 @@ namespace aima::vacuum {
          */
         explicit BasicVacuumEnvironment( unsigned long x = 2, unsigned long y = 1 );
 
+        std::unique_ptr<core::Environment> clone() override;
+
         std::unique_ptr<core::Percept> getPerceptSeenBy( const core::Agent& agent ) override;
 
-        Location getAgentLocation( const core::Agent& agent ) const { return agentLocations.at( agent ); }
+        const Location& getAgentLocation( const core::Agent& agent ) const { return agentLocations.at( agent ); }
 
-        const AgentLocations getAgentLocations() const noexcept { return agentLocations; }
+        const AgentLocations& getAgentLocations() const noexcept { return agentLocations; }
 
-        void setAgentLocation( const core::Agent& agent, Location location ) {
-            agentLocations[ agent ] = std::move( location );
-        }
+        std::vector<Location> getAgentLocationsList() const;
+
+        void setAgentLocation( const core::Agent& agent, const Location& location );
 
         void removeAgent( const core::Agent& agent ) override;
 
@@ -59,9 +61,9 @@ namespace aima::vacuum {
 
         const Locations& getLocations() const noexcept { return locations; }
 
-        LocationState getLocationState( Location location ) const;
+        LocationState getLocationState( const Location& location ) const;
 
-        void setLocationState( Location location, LocationState state );
+        void setLocationState( const Location& location, LocationState state );
 
         bool addAgent( core::Agent& agent ) override;
 
@@ -74,11 +76,13 @@ namespace aima::vacuum {
         unsigned long getY() const { return locations.size2(); }
 
     protected:
+        BasicVacuumEnvironment( const BasicVacuumEnvironment& ) = default;
+
         Location& getAgentLocationByRef( const core::Agent& agent ) { return agentLocations[ agent ]; }
 
         Location randomLocation() const;
 
-        unsigned maxSteps() const noexcept { return 1000; }
+        constexpr unsigned maxSteps() const noexcept { return 1000; }
 
         bool agentStopped() const noexcept { return agentStopped_; }
 

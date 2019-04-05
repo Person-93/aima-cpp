@@ -1,16 +1,18 @@
 #pragma once
 
-#include <core/Agent.hpp>
-#include <core/Action.hpp>
+#include <memory>
+#include "core/Agent.hpp" // IWYU pragma: export
 
-namespace aima::core {
-    class Percept;
-}
+// IWYU pragma: no_include "core/Action.hpp"
+
+namespace aima::core { class Percept; }
 
 namespace aima::vacuum {
     class BasicVacuumAgent : public core::Agent {
     public:
-        BasicVacuumAgent() = default;
+        BasicVacuumAgent();
+
+        std::unique_ptr<Agent> clone() const override;
 
         const core::Action& execute( const core::Percept& percept ) override;
     };

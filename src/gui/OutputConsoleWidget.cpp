@@ -1,27 +1,67 @@
 #include "OutputConsoleWidget.hpp"
+#include <utility>
+#include "util/define_logger.hpp"
+#include "ImGuiWrapper.hpp"
+
+// IWYU pragma: no_include "imgui.h"
 
 using namespace aima::gui;
+using namespace aima::util;
+using aima::gui::detail::OutputConsoleBuffer;
 
-detail::OutputConsoleBuffer::OutputConsoleBuffer( ThreadSafeBool& outputPastDisplay, ThreadSafeString& display ) :
-        std::stringbuf( std::ios_base::out ), outputPastDisplay( outputPastDisplay ), display( display ) {}
+DEFINE_LOGGER( OutputConsoleWidget );
 
-int detail::OutputConsoleBuffer::sync() {
-    display += str();
+OutputConsoleBuffer::OutputConsoleBuffer( ThreadSafeBool& outputPastDisplay, ThreadSafeString& display ) :
+        std::stringbuf( std::ios_base::out ), outputPastDisplay( &outputPastDisplay ), display( &display ) {
+    TRACE;
+}
+
+int OutputConsoleBuffer::sync() {
+    TRACE;
+
+    *display += str();
     str( "" );
-    outputPastDisplay = true;
+    *outputPastDisplay = true;
     return 0;
 }
 
-void detail::OutputConsoleBuffer::clear() {
+void OutputConsoleBuffer::clear() {
+    TRACE;
+
     str( "" );
 }
 
-OutputConsoleWidget::OutputConsoleWidget( util::ThreadSafeWrapper<bool>& outputPastDisplay )
-        : outputPastDisplay( outputPastDisplay ), buffer( outputPastDisplay, display ) {
+OutputConsoleWidget::OutputConsoleWidget()
+        : outputPastDisplay( false ), buffer( outputPastDisplay, display ) {
+    TRACE;
+
     rdbuf( &buffer );
 }
 
-bool OutputConsoleWidget::render( ImGuiWrapper& gui, ImGuiWrapper::ChildWindowConfig& config, bool scrollEnabled ) {
+OutputConsoleWidget::OutputConsoleWidget( OutputConsoleWidget&& other ) noexcept( false ) :
+        std::ostream( std::move( other )),
+        display( std::move( other.display )),
+        outputPastDisplay( std::move( other.outputPastDisplay )),
+        buffer( std::move( other.buffer )) {
+    TRACE;
+
+    rdbuf( &buffer );
+}
+
+OutputConsoleWidget& OutputConsoleWidget::operator=( OutputConsoleWidget&& other ) noexcept( false ) {
+    TRACE;
+
+    display           = std::move( other.display );
+    buffer            = std::move( other.buffer );
+    outputPastDisplay = std::move( other.outputPastDisplay );
+    std::ostream::operator=( std::move( other ));
+    rdbuf( &buffer );
+    return *this;
+}
+
+bool OutputConsoleWidget::render( ImGuiWrapper& gui, ChildWindowConfig& config, bool scrollEnabled ) {
+    TRACE;
+
     return gui.childWindow( config, [ this, &scrollEnabled ]() {
         ImGui::TextUnformatted( display.dirtyRead().c_str());
         if ( outputPastDisplay.dirtyRead() && scrollEnabled ) {
@@ -32,6 +72,9 @@ bool OutputConsoleWidget::render( ImGuiWrapper& gui, ImGuiWrapper::ChildWindowCo
 }
 
 void OutputConsoleWidget::clear() {
-    display = "";
+    TRACE;
+
+    display           = "";
+    outputPastDisplay = false;
     buffer.clear();
 }

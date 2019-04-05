@@ -1,31 +1,30 @@
 #pragma once
 
 #include <memory>
+#include <string_view>
+#include "views/GraphicViewer.hpp" // IWYU pragma: export
 
-#include "viewers/GraphicViewer.hpp"
-
-namespace aima::core {
-    class Environment;
-}
+namespace aima::core { class Environment; }
+namespace aima::gui { struct ImGuiWrapper; }
 
 namespace aima::vacuum {
     class BasicVacuumEnvironment;
-}
 
-namespace aima::vacuum {
+    /**
+     * A graphic viewer for displaying a vacuum environment
+     */
     class VacuumGui : public viewer::GraphicViewer {
-        using viewer::GraphicViewer::GraphicViewer;
     public:
+        explicit VacuumGui( std::string_view title, bool* open, std::string_view str_id = std::string_view{} );
+
         void setEnvironment( const std::shared_ptr<core::Environment>& environment ) override;
 
     protected:
-        void renderDisplay( std::shared_ptr<core::Environment>& environment ) override;
+        void renderDisplay( gui::ImGuiWrapper& imGuiWrapper, std::shared_ptr<core::Environment>& environment ) override;
 
     private:
         void renderPerformanceMeasure( aima::vacuum::BasicVacuumEnvironment& environment );
 
-        void renderGrid( aima::vacuum::BasicVacuumEnvironment& environment );
+        void renderGrid( const BasicVacuumEnvironment& environment );
     };
 }
-
-

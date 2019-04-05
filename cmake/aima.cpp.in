@@ -1,0 +1,6 @@
+// @NOTICE@
+
+#define @MACRO@
+#include "@FILE@.hpp"     // IWYU pragma: keep
+#include "@REGISTRATION@" // IWYU pragma: keep
+AIMA_REGISTER_@TYPE@( @local_CLASS@ ) // NOLINT(cert-err58-cpp)

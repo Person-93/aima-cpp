@@ -1,34 +1,38 @@
 #include "Action.hpp"
-#include <string>
+#include <iostream>
+#include "util/define_logger.hpp"
 
-// IWYU pragma: no_include <map>
-// used by AttributesMixin
-
-using std::string;
 using std::string_view;
+using aima::core::Action;
 
-namespace aima::core {
-    const string_view noOpName      = "NoOp";
-    const string_view attributeName = "name";
+DEFINE_LOGGER( Action );
 
-    bool Action::isNoOp() const {
-        return attributes.at( string( attributeName )) == noOpName;
-    }
+namespace {
+    const string_view noOpName = "NoOp";
+}
 
-    Action::Action( string_view name ) {
-        attributes[ string( attributeName ) ] = name;
-    }
+bool Action::isNoOp() const {
+    return name == noOpName;
+}
 
-    std::string_view Action::getName() const {
-        return attributes.at( string( attributeName ));
-    }
+Action::Action( string_view name ) noexcept : name( name ) { TRACE; }
 
-    const Action& Action::noOp() {
-        static Action action( noOpName );
-        return action;
-    }
+const Action& Action::noOp() noexcept {
+    static Action action( noOpName );
+    return action;
+}
 
-    bool operator==( const Action& a, const Action& b ) {
-        return a.getName() == b.getName();
-    }
+void Action::print( std::ostream& out ) const {
+    out << "name=" << name;
+}
+
+std::ostream& aima::core::operator<<( std::ostream& out, const Action& action ) {
+    out << '[';
+    action.print( out );
+    out << ']';
+    return out;
+}
+
+std::unique_ptr<Action> aima::core::Action::clone() const {
+    return std::unique_ptr<Action>( new Action( *this ));
 }

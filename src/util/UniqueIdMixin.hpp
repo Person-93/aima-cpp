@@ -55,7 +55,8 @@ namespace aima::util {
 
             UniqueIdBase& operator=( UniqueIdBase<T>&& ) noexcept = default;
 
-            virtual ~UniqueIdBase() = default;
+        protected:
+            ~UniqueIdBase() = default;
         };
 
         template< class T >
@@ -67,6 +68,9 @@ namespace aima::util {
              * @return The unique id
              */
             uint_least32_t id() const { return this->unique_id_; }
+
+        protected:
+            ~UniqueIdVisibleBase() = default;
         };
     }
 
@@ -76,17 +80,30 @@ namespace aima::util {
      * Here is an example usage.
      *
      * @code
-     * class Thing : UniqueId<Thing> {};
+     * class Thing : UniqueId&lt;Thing&gt; {};
      *
-     * std::set<Thing, Thing::less> things;
+     * std::set&lt;Thing, Thing::less&gt; things;
+     * std::unordered_set&lt;Thing, Thing::hash&gt; unorderedThings;
      * @endcode
      *
-     * @tparam T- The derived type. Uses CRTP.
-     * @tparam visible- Should the unique ID be visible
+     * @tparam T The derived type. Uses CRTP.
+     * @tparam visible  Should the unique ID be visible?
+     *              If this is true, the class will have a public method <code>id()</code>.
+     *              Default is false.
      */
     template< class T, bool visible >
     class UniqueIdMixin : public std::conditional_t<visible, detail::UniqueIdVisibleBase<T>, detail::UniqueIdBase<T>> {
         UniqueIdMixin() noexcept = default;
+
+        UniqueIdMixin( const UniqueIdMixin& ) noexcept = default;
+
+        UniqueIdMixin( UniqueIdMixin&& ) noexcept = default;
+
+        UniqueIdMixin& operator=( const UniqueIdMixin& ) noexcept = default;
+
+        UniqueIdMixin& operator=( UniqueIdMixin&& ) noexcept = default;
+
+        ~UniqueIdMixin() = default;
 
         friend T;
     };
