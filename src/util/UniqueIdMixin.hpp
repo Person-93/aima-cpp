@@ -4,30 +4,12 @@
 #include <functional>
 
 namespace aima::util {
-    template< typename T, bool visible = false >
-    class UniqueIdMixin;
-
     namespace detail {
         template< class T >
         class UniqueIdVisibleBase;
 
         template< class T >
         class UniqueIdBase {
-            UniqueIdBase() noexcept = default;
-
-            static uint_least32_t generateId() noexcept {
-                static std::atomic_uint_least32_t counter = 0;
-                return ++counter;
-            }
-
-            uint_least32_t unique_id_ = generateId();
-
-            friend class UniqueIdMixin<T, true>;
-
-            friend class UniqueIdMixin<T, false>;
-
-            friend class UniqueIdVisibleBase<T>;
-
         public:
             /** A function object that can be used for sorting in maps and sets */
             struct less {
@@ -47,6 +29,9 @@ namespace aima::util {
                 return a.unique_id_ == b.unique_id_;
             }
 
+        protected:
+            UniqueIdBase() noexcept = default;
+
             UniqueIdBase( const UniqueIdBase<T>& ) noexcept = default;
 
             UniqueIdBase( UniqueIdBase<T>&& ) noexcept = default;
@@ -55,14 +40,21 @@ namespace aima::util {
 
             UniqueIdBase& operator=( UniqueIdBase<T>&& ) noexcept = default;
 
-        protected:
             ~UniqueIdBase() = default;
+
+            friend class UniqueIdVisibleBase<T>;
+
+        private:
+            static uint_least32_t generateId() noexcept {
+                static std::atomic_uint_least32_t counter = 0;
+                return ++counter;
+            }
+
+            uint_least32_t unique_id_ = generateId();
         };
 
         template< class T >
         class UniqueIdVisibleBase : public UniqueIdBase<T> {
-            friend class UniqueIdMixin<T, true>;
-
         public:
             /**
              * @return The unique id
@@ -91,8 +83,9 @@ namespace aima::util {
      *              If this is true, the class will have a public method <code>id()</code>.
      *              Default is false.
      */
-    template< class T, bool visible >
+    template< class T, bool visible = false >
     class UniqueIdMixin : public std::conditional_t<visible, detail::UniqueIdVisibleBase<T>, detail::UniqueIdBase<T>> {
+    protected:
         UniqueIdMixin() noexcept = default;
 
         UniqueIdMixin( const UniqueIdMixin& ) noexcept = default;
@@ -104,7 +97,5 @@ namespace aima::util {
         UniqueIdMixin& operator=( UniqueIdMixin&& ) noexcept = default;
 
         ~UniqueIdMixin() = default;
-
-        friend T;
     };
 }
