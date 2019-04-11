@@ -26,5 +26,8 @@ namespace aima::vacuum {
         void renderPerformanceMeasure( aima::vacuum::BasicVacuumEnvironment& environment );
 
         void renderGrid( const BasicVacuumEnvironment& environment );
+
+        std::string littleBuffer;
+        std::string bigBuffer;
     };
 }
