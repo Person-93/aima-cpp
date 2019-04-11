@@ -7,8 +7,9 @@ list ( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake )
 project ( aima_cpp VERSION "0.1.0" )
 
 set ( CMAKE_CXX_STANDARD 17 )
-set ( BUILD_SHARED_LIBS CACHE BOOL ON "Build shared libraries" )
 set ( LOG_LEVEL "DEBUG" CACHE STRING "Log level to use for Log4cplus" )
+set ( BUILD_SHARED_LIBS CACHE BOOL ON "Build shared libraries" )
+set ( CMAKE_LINK_DEPENDS_NO_SHARED ON )
 set ( Boost_USE_MULTITHREADED ON )
 set ( OpenGL_GL_PREFERENCE GLVND )
 
