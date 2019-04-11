@@ -23,9 +23,11 @@ const Action BasicVacuumEnvironment::ACTION_SUCK( "Suck" );
 
 DEFINE_LOGGER( BasicVacuumEnvironment );
 
-std::mt19937& randomnessEngine() {
-    static std::mt19937 engine( std::random_device{}());
-    return engine;
+namespace {
+    std::mt19937& randomnessEngine() {
+        static std::mt19937 engine( std::random_device{}());
+        return engine;
+    }
 }
 
 BasicVacuumEnvironment::BasicVacuumEnvironment( unsigned long x, unsigned long y )
@@ -51,7 +53,8 @@ std::unique_ptr<Environment> BasicVacuumEnvironment::clone() {
 
 std::vector<Location> BasicVacuumEnvironment::getAgentLocationsList() const {
     const auto& agentLocationsMap = getAgentLocations();
-    std::vector<Location> locations( agentLocationsMap.size());
+    std::vector<Location> locations;
+    locations.reserve( agentLocationsMap.size());
     std::transform( agentLocationsMap.begin(), agentLocationsMap.end(), std::back_inserter( locations ),
                     []( auto pair ) { return pair.second; } );
     std::sort( locations.begin(), locations.end(), std::less<Location>{} );
