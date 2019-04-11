@@ -23,7 +23,9 @@ namespace aima::core {
         }
 
         friend std::ostream& operator<<( std::ostream& out, const Percept& percept ) {
+            out << '[';
             percept.print( out );
+            out << ']';
             return out;
         }
 
