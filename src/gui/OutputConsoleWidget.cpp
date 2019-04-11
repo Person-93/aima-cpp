@@ -36,6 +36,7 @@ OutputConsoleWidget::OutputConsoleWidget()
     TRACE;
 
     rdbuf( &buffer );
+    display.access( []( std::string& string ) { string.reserve( 4096 ); } );
 }
 
 OutputConsoleWidget::OutputConsoleWidget( OutputConsoleWidget&& other ) noexcept( false ) :

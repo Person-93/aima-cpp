@@ -11,11 +11,11 @@ namespace aima::gui {
         public:
             OutputConsoleBuffer( util::ThreadSafeBool& outputPastDisplay, util::ThreadSafeString& display );
 
-            OutputConsoleBuffer( OutputConsoleBuffer& ) = delete;
+            OutputConsoleBuffer( const OutputConsoleBuffer& ) = delete;
 
             OutputConsoleBuffer( OutputConsoleBuffer&& ) noexcept( false ) = default;
 
-            OutputConsoleBuffer& operator=( OutputConsoleBuffer& ) = delete;
+            OutputConsoleBuffer& operator=( const OutputConsoleBuffer& ) = delete;
 
             OutputConsoleBuffer& operator=( OutputConsoleBuffer&& ) noexcept( false ) = default;
 
