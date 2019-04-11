@@ -23,12 +23,12 @@ std::unique_ptr<Agent> StatefulVacuumAgent::clone() const {
 
 StatefulVacuumAgent::StatefulVacuumAgent( unsigned long x, unsigned long y ) : state( x, y ) {
     TRACE;
-    LOG4CPLUS_DEBUG( GetLogger(), "Constructing " << util::parseTitle<StatefulVacuumAgent>()
-                                                  << " Dimensions: (" << x << ',' << y << ')' );
+    LOG4CPLUS_DEBUG( GetLogger(), "Constructing \"" << util::parseTitle<StatefulVacuumAgent>()
+                                                    << "\" Dimensions: (" << x << ',' << y << ')' );
 
-    for ( size_t i = 0; i < x; ++i )
-        for ( size_t j = 0; j < y; ++j )
-            state( i, j ) = false;
+    for ( auto i = state.begin1(), end1 = state.end1(); i != end1; ++i )
+        for ( bool& j : i )
+            j = false;
 }
 
 StatefulVacuumAgent::StatefulVacuumAgent( const BasicVacuumEnvironment& environment ) :
@@ -55,12 +55,12 @@ const Action& StatefulVacuumAgent::execute( const Percept& percept ) {
     using namespace aima::core::exception;
     AIMA_THROW_EXCEPTION( Exception{} << Because( "Agent received unrecognized percept" )
                                       << AgentType( util::parseTitle<StatefulVacuumAgent>())
-                                      << PerceptInfo( std::string( percept )));
+                                      << PerceptInfo( util::StringBuilder( 256 ) << percept ));
 }
 
 bool StatefulVacuumAgent::allClean() {
-    for ( size_t i = 0, s1 = state.size1(); i < s1; ++i )
-        for ( size_t j = 0, s2 = state.size2(); j < s2; ++j )
-            if ( !state( i, j )) return false;
+    for ( auto i = state.cbegin1(), end1 = state.cend1(); i != end1; ++i )
+        for ( bool j : i )
+            if ( !j ) return false;
     return true;
 }
