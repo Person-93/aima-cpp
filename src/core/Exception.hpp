@@ -10,18 +10,20 @@
 
 
 namespace aima::core::exception {
-    using AgentType           = boost::error_info<struct agent, std::string_view>;
-    using EnvironmentType     = boost::error_info<struct environment, std::string_view>;
-    using EnvironmentViewType = boost::error_info<struct environment_view, std::string_view>;
-    using DemoType            = boost::error_info<struct demo, std::string_view>;
-    using AppType             = boost::error_info<struct app, std::string_view>;
-    using Because             = boost::error_info<struct cause, std::string>;
-    using PerceptInfo         = boost::error_info<struct percept, std::string>;
+    using AgentType               = boost::error_info<struct agent, std::string_view>;
+    using EnvironmentType         = boost::error_info<struct environment, std::string_view>;
+    using EnvironmentViewType     = boost::error_info<struct environment_view, std::string_view>;
+    using DemoType                = boost::error_info<struct demo, std::string_view>;
+    using AppType                 = boost::error_info<struct app, std::string_view>;
+    using Because                 = boost::error_info<struct cause, std::string>;
+    using PerceptInfo             = boost::error_info<struct percept, std::string>;
+    using WrappedExceptionType    = boost::error_info<struct wrapped_exception_type, std::string>;
+    using WrappedExceptionMessage = boost::error_info<struct wrapped_exception_message, std::string>;
 
     class Exception : public virtual std::exception, public virtual boost::exception {
     public:
         const char* what() const noexcept override {
-            const std::string* info = boost::get_error_info<Because>( *this );
+            const std::string* const info = boost::get_error_info<Because>( *this );
             return info ? info->c_str() : std::exception::what();
         }
     };
