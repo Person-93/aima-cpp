@@ -11,3 +11,5 @@ if ( NOT Log4cplus_FOUND )
         target_link_libraries ( Log4cplus INTERFACE ${Log4cplus_LIBRARY} )
     endif ()
 endif ()
+
+mark_as_advanced ( Log4cplus_INCLUDE_DIR SQLITE3_LIBRARIES )
