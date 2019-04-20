@@ -33,7 +33,7 @@ namespace aima::util::detail {
 
     inline auto makeTracer( log4cplus::Logger& logger, const char* const function ) {
         using namespace log4cplus;
-        if constexpr ( APPLICATION_LOG_LEVEL <= TRACE_LOG_LEVEL )
+        if constexpr ( APPLICATION_LOG_LEVEL <= TRACE_LOG_LEVEL ) // NOLINT(misc-redundant-expression)
             return Tracer( logger, function );
         else
             return '\0';

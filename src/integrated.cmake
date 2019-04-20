@@ -9,7 +9,7 @@ add_library ( integrated_app
               integrated/IntegratedDemo.hpp
               integrated/forward.hpp
               )
-target_link_libraries ( integrated_app PUBLIC app_base demo_base imgui )
+target_link_libraries ( integrated_app PUBLIC app_base demo_base user_interface )
 link_demos ( integrated_app )
 link_apps ( integrated_app )
 

@@ -32,3 +32,10 @@ add_executable ( imgui_demo
                  )
 target_link_libraries ( imgui_demo PRIVATE imgui_base )
 target_include_directories ( imgui_demo PRIVATE imgui/examples )
+
+add_library ( stb INTERFACE )
+target_include_directories ( stb INTERFACE stb )
+
+add_library ( SQLite INTERFACE )
+target_include_directories ( SQLite INTERFACE sqlite_modern_cpp/hdr ${SQLITE3_INCLUDE_DIRS} )
+target_link_libraries ( SQLite INTERFACE ${SQLITE3_LIBRARIES} )
