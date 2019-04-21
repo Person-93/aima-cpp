@@ -3,6 +3,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
+#include <version.hpp>
 #include "gui/ImGuiWrapper.hpp"
 #include "IntegratedRunner.hpp"
 #include "util/configure_logging.hpp"
@@ -16,6 +17,7 @@ extern "C" void signalHandler( int ) { shouldRun = false; }
 int main() try {
     std::signal( SIGTERM, signalHandler );
     aima::util::ConfigureLogging();
+    LOG4CPLUS_INFO( log4cplus::Logger::getRoot(), "Running aima-cpp version: " << aima::version::longVersion());
     aima::IntegratedRunner::IntegratedRunner integratedRunner;
     aima::gui::ImGuiWrapper                  imGuiWrapper( "AIMA Integrated App Runner" );
     integratedRunner.run( imGuiWrapper, shouldRun );

@@ -4,7 +4,15 @@ if ( DEFINED CMAKE_TOOLCHAIN_FILE )
 endif ()
 list ( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake )
 
-project ( aima_cpp VERSION "0.1.0" )
+project ( aima_cpp )
+include ( GetGitRevisionDescription )
+
+git_describe ( VERSION --tags --dirty=-dirty )
+message ( STATUS "Configuring ${PROJECT_NAME} ${VERSION}" )
+set_version_vars ( "${VERSION}" "VERSION" )
+
+set ( version_file ${CMAKE_CURRENT_BINARY_DIR}/version.cpp )
+configure_file ( "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cpp.in" "${version_file}" @ONLY )
 
 set ( CMAKE_CXX_STANDARD 17 )
 option ( AIMA_ENABLE_TESTING "Build the test cases" OFF )

@@ -5,6 +5,8 @@ add_library ( logging
 target_link_libraries ( logging PUBLIC Log4cplus )
 target_compile_definitions ( logging PUBLIC APPLICATION_LOG_LEVEL=${LOG_LEVEL}_LOG_LEVEL )
 
+add_library ( version version.hpp ${version_file} )
+
 add_library ( common
               core/Environment.cpp
               core/Environment.hpp
@@ -24,7 +26,7 @@ add_library ( common
               util/type_traits.hpp
               util/UniqueIdMixin.hpp
               )
-target_link_libraries ( common PUBLIC logging atomic Threads::Threads )
+target_link_libraries ( common PUBLIC version logging atomic Threads::Threads )
 
 add_library ( imgui
               gui/ImGuiWrapper.hpp

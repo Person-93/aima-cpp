@@ -66,11 +66,13 @@ namespace aima::IntegratedRunner::detail {
 #include <boost/exception/exception.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include "util/configure_logging.hpp"
+#include "version.hpp"
 
 #define AIMA_REGISTER_DEMO( DemoClass ) \
 int main() try {                    \
     using namespace aima::demos;    \
     aima::util::ConfigureLogging(); \
+    LOG4CPLUS_INFO( log4cplus::Logger::getRoot(), "Running aima-cpp version: " << aima::version::longVersion() ); \
     standAloneDemo<DemoClass>();    \
     LOG4CPLUS_DEBUG( log4cplus::Logger::getRoot(), "Application exiting normally" ); \
     return 0;                       \
