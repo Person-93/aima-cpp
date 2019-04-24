@@ -12,8 +12,6 @@ add_library ( common
               core/Environment.hpp
               core/Action.cpp
               core/Action.hpp
-              core/App.cpp
-              core/App.hpp
               views/SimpleViewer.cpp
               views/SimpleViewer.hpp
               util/ThreadSafeWrapper.cpp
@@ -26,7 +24,7 @@ add_library ( common
               util/type_traits.hpp
               util/UniqueIdMixin.hpp
               )
-target_link_libraries ( common PUBLIC version logging atomic Threads::Threads )
+target_link_libraries ( common PUBLIC version logging atomic )
 
 add_library ( imgui
               gui/ImGuiWrapper.hpp
@@ -45,18 +43,6 @@ add_library ( asset_manager
 target_link_libraries ( asset_manager PRIVATE SQLite )
 target_link_libraries ( asset_manager PUBLIC common stdc++fs )
 
-add_library ( user_interface
-              gui/Image.hpp
-              gui/Image.cpp
-              views/GraphicViewer.cpp
-              views/GraphicViewer.hpp
-              gui/OutputConsoleWidget.cpp
-              gui/OutputConsoleWidget.hpp
-              )
-target_link_libraries ( user_interface PRIVATE stb )
-target_link_libraries ( user_interface PUBLIC imgui common )
-target_link_libraries ( user_interface INTERFACE asset_manager )
-
 add_library ( demo_base
               core/Demo.cpp
               core/Demo.hpp
@@ -66,9 +52,16 @@ add_library ( demo_base
 target_link_libraries ( demo_base PUBLIC common )
 
 add_library ( app_base
+              core/App.cpp
+              core/App.hpp
               core/AppPtr.cpp
               core/AppPtr.hpp
               core/AppRegistryEntry.cpp
               core/AppRegistryEntry.hpp
+              views/GraphicViewer.cpp
+              views/GraphicViewer.hpp
+              gui/OutputConsoleWidget.cpp
+              gui/OutputConsoleWidget.hpp
               )
-target_link_libraries ( app_base PUBLIC common )
+target_link_libraries ( app_base PUBLIC imgui common Threads::Threads )
+target_link_libraries ( app_base INTERFACE asset_manager )
