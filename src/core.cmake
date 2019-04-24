@@ -58,10 +58,13 @@ add_library ( app_base
               core/AppPtr.hpp
               core/AppRegistryEntry.cpp
               core/AppRegistryEntry.hpp
+              gui/Image.hpp
+              gui/Image.cpp
               views/GraphicViewer.cpp
               views/GraphicViewer.hpp
               gui/OutputConsoleWidget.cpp
               gui/OutputConsoleWidget.hpp
               )
+target_link_libraries ( app_base PRIVATE stb )
 target_link_libraries ( app_base PUBLIC imgui common Threads::Threads )
 target_link_libraries ( app_base INTERFACE asset_manager )
