@@ -27,6 +27,7 @@ namespace aima::gui {
         auto         title = util::parseTitle<AppType>();
         ImGuiWrapper imGuiWrapper( title );
         AppType      app( imGuiWrapper );
+        app.display( true );
         while ( shouldRun && !imGuiWrapper.shouldClose() && app.stayOpen()) {
             auto f = imGuiWrapper.frame();
             app.render();

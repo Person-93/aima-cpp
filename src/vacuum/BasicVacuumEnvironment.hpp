@@ -27,9 +27,14 @@ namespace aima::vacuum {
      */
     class BasicVacuumEnvironment : public core::Environment {
     public:
-        using AgentLocations = std::unordered_map<std::reference_wrapper<const core::Agent>,
-                                                  Location,
-                                                  core::Agent::hash>;
+        struct AgentState {
+            Location location;
+            bool     sucking;
+        };
+
+        using AgentStates = std::unordered_map<std::reference_wrapper<const core::Agent>,
+                                               AgentState,
+                                               core::Agent::hash>;
         using Locations = boost::numeric::ublas::matrix<LocationState>;
 
         static const core::Action ACTION_MOVE_LEFT;
@@ -47,9 +52,9 @@ namespace aima::vacuum {
 
         std::unique_ptr<core::Percept> getPerceptSeenBy( const core::Agent& agent ) override;
 
-        const Location& getAgentLocation( const core::Agent& agent ) const { return agentLocations.at( agent ); }
+        const Location& getAgentLocation( const core::Agent& agent ) const { return agentStates.at( agent ).location; }
 
-        const AgentLocations& getAgentLocations() const noexcept { return agentLocations; }
+        const AgentStates& getAgentStates() const noexcept { return agentStates; }
 
         std::vector<Location> getAgentLocationsList() const;
 
@@ -78,7 +83,7 @@ namespace aima::vacuum {
     protected:
         BasicVacuumEnvironment( const BasicVacuumEnvironment& ) = default;
 
-        Location& getAgentLocationByRef( const core::Agent& agent ) { return agentLocations[ agent ]; }
+        Location& getAgentLocationByRef( const core::Agent& agent ) { return agentStates[ agent ].location; }
 
         Location randomLocation() const;
 
@@ -89,8 +94,8 @@ namespace aima::vacuum {
         void agentStopped( bool stopped ) { agentStopped_ = stopped; }
 
     private:
-        bool           agentStopped_ = false;
-        Locations      locations;
-        AgentLocations agentLocations;
+        bool        agentStopped_ = false;
+        Locations   locations;
+        AgentStates agentStates;
     };
 }

@@ -16,14 +16,14 @@ DEFINE_LOGGER( TrivialVacuumApp );
 TrivialVacuumApp::TrivialVacuumApp( gui::ImGuiWrapper& imGuiWrapper ) :
         App( imGuiWrapper ),
         environment_( std::make_shared<BasicVacuumEnvironment>()),
-        vacuumGui( parseTitle<TrivialVacuumApp>(), &stayOpen_ ) {
+        vacuumGui( parseTitle<TrivialVacuumApp>(), &stayOpen_, std::string_view()) {
     TRACE;
 
     vacuumGui.setEnvironment( environment_ );
     environment_->addAgent( agent );
 }
 
-void TrivialVacuumApp::render() {
+void TrivialVacuumApp::renderImpl() {
     TRACE;
 
     vacuumGui.render( imGuiWrapper());

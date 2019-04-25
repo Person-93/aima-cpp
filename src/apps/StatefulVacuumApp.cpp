@@ -14,14 +14,14 @@ StatefulVacuumApp::StatefulVacuumApp( ImGuiWrapper& imGuiWrapper )
         : App( imGuiWrapper ),
           environment_( std::make_shared<BasicVacuumEnvironment>()),
           agent( *environment_ ),
-          vacuumGui( util::parseTitle<StatefulVacuumApp>(), &stayOpen_ ) {
+          vacuumGui( util::parseTitle<StatefulVacuumApp>(), &stayOpen_, std::string_view()) {
     TRACE;
 
     vacuumGui.setEnvironment( environment_ );
     environment_->addAgent( agent );
 }
 
-void StatefulVacuumApp::render() {
+void StatefulVacuumApp::renderImpl() {
     TRACE;
 
     vacuumGui.render( imGuiWrapper());

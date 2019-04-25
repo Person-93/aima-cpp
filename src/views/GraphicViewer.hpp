@@ -5,6 +5,7 @@
 #include <exception>
 #include <mutex>
 #include <thread>
+#include <vector>
 #include "core/EnvironmentView.hpp"
 #include "gui/ImGuiWrapper.hpp"
 #include "gui/OutputConsoleWidget.hpp"
@@ -22,6 +23,8 @@ namespace aima::core {
     class Environment;
 }
 
+namespace aima::util::AssetManager { class AssetHandle; }
+
 namespace aima::viewer {
     namespace detail {
         struct WindowConfigs {
@@ -36,14 +39,19 @@ namespace aima::viewer {
      */
     class GraphicViewer : public core::EnvironmentView {
     public:
+        using AssetHandles = std::vector<util::AssetManager::AssetHandle>;
+        using AssetLoader  = AssetHandles( * )();
+
         /**
-         * Constructs the viewer
-         * @param title The title of the DearImGui window
-         * @param open Will be set to false if the user closes the window
+         * Two phase initialization is required because GraphicViewer object may be crated before the graphics engine
+         * is initialized
+         * @param imGuiWrapper
          */
-        explicit GraphicViewer( std::string_view title,
-                                bool* open = nullptr,
-                                std::string_view str_id = std::string_view{} );
+        void init( gui::ImGuiWrapper& imGuiWrapper ) {
+            if ( initialized ) return;
+            initMethod( imGuiWrapper );
+            initialized = true;
+        }
 
         void notify( std::string_view message ) override;
 
@@ -70,10 +78,24 @@ namespace aima::viewer {
         void setStrId( std::string_view str_id );
 
     protected:
+        virtual void initMethod( gui::ImGuiWrapper& imGuiWrapper ) {}
+
+        /**
+         * Constructs the viewer
+         * @param assetLoader A function that loads all assets needed by the viewer
+         * @param title The title of the DearImGui window
+         * @param open Will be set to false if the user closes the window
+         */
+        GraphicViewer( AssetLoader assetLoader,
+                       std::string_view title,
+                       bool* open = nullptr,
+                       std::string_view str_id = std::string_view{} );
+
+
         /**
          * This method is protected to prevent slicing of derived classes
          */
-        ~GraphicViewer() = default;
+        ~GraphicViewer();
 
         virtual void renderDisplay( gui::ImGuiWrapper& imGuiWrapper,
                                     std::shared_ptr<core::Environment>& environment ) = 0;
@@ -98,10 +120,12 @@ namespace aima::viewer {
         util::ThreadSafeBool             scrollConsole;
         std::exception_ptr               deferredException;
         std::mutex                       exceptionMutex;
+        AssetHandles                     assetHandles;
         bool                             firstRender;
         const std::string_view           title;
         bool* const open;
         std::string_view str_id;
+        bool             initialized = false;
     };
 }
 

@@ -52,11 +52,11 @@ std::unique_ptr<Environment> BasicVacuumEnvironment::clone() {
 }
 
 std::vector<Location> BasicVacuumEnvironment::getAgentLocationsList() const {
-    const auto& agentLocationsMap = getAgentLocations();
+    const auto& agentLocationsMap = getAgentStates();
     std::vector<Location> locations;
     locations.reserve( agentLocationsMap.size());
     std::transform( agentLocationsMap.begin(), agentLocationsMap.end(), std::back_inserter( locations ),
-                    []( auto pair ) { return pair.second; } );
+                    []( auto pair ) { return pair.second.location; } );
     std::sort( locations.begin(), locations.end(), std::less<Location>{} );
     return locations;
 }
@@ -72,7 +72,7 @@ std::unique_ptr<Percept> BasicVacuumEnvironment::getPerceptSeenBy( const Agent& 
 void BasicVacuumEnvironment::removeAgent( const Agent& agent ) {
     TRACE;
 
-    agentLocations.erase( agent );
+    agentStates.erase( agent );
     Environment::removeAgent( agent );
 }
 
@@ -108,6 +108,7 @@ void BasicVacuumEnvironment::executeAction( const Agent& agent, const Action& ac
 
     auto& location = getAgentLocationByRef( agent );
 
+    bool sucking = false;
     if ( action == ACTION_MOVE_DOWN ) {
         if ( location.y < getY() - 1 ) {
             ++location.y;
@@ -132,13 +133,17 @@ void BasicVacuumEnvironment::executeAction( const Agent& agent, const Action& ac
             updatePerformanceMeasure( agent, -1 );
         }
     }
-    else if ( action == ACTION_SUCK ) { setLocationState( location, LocationState::CLEAN ); }
+    else if ( action == ACTION_SUCK ) {
+        setLocationState( location, LocationState::CLEAN );
+        sucking = true;
+    }
     else if ( action.isNoOp()) { agentStopped( true ); }
     else {
         using namespace aima::core::exception;
         BOOST_THROW_EXCEPTION( Exception{} << EnvironmentType( util::parseTitle<BasicVacuumEnvironment>())
                                            << Because( "Unrecognized action received" ));
     }
+    agentStates[ agent ].sucking = sucking;
 }
 
 void BasicVacuumEnvironment::createExogenousChange() {
@@ -163,5 +168,5 @@ Location BasicVacuumEnvironment::randomLocation() const {
 void BasicVacuumEnvironment::setAgentLocation( const Agent& agent, const Location& location ) {
     TRACE;
 
-    agentLocations[ agent ] = location;
+    agentStates[ agent ].location = location;
 }

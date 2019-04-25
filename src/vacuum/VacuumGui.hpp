@@ -23,11 +23,14 @@ namespace aima::vacuum {
         void renderDisplay( gui::ImGuiWrapper& imGuiWrapper, std::shared_ptr<core::Environment>& environment ) override;
 
     private:
+        void initMethod( gui::ImGuiWrapper& imGuiWrapper ) override;
+
         void renderPerformanceMeasure( aima::vacuum::BasicVacuumEnvironment& environment );
 
         void renderGrid( const BasicVacuumEnvironment& environment );
 
         std::string littleBuffer;
         std::string bigBuffer;
+        ImTextureID dustyTexture;
     };
 }

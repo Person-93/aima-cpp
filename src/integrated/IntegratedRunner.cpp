@@ -28,7 +28,7 @@ void IntegratedRunner::run( ImGuiWrapper& imGuiWrapper, std::atomic_bool& should
     TRACE;
     LOG4CPLUS_INFO( GetLogger(), "Running integrated app runner" );
 
-    while ( !imGuiWrapper.shouldClose() && shouldRun) {
+    while ( !imGuiWrapper.shouldClose() && shouldRun ) {
         auto f = imGuiWrapper.frame();
         menuBar( imGuiWrapper );
 
@@ -73,8 +73,8 @@ bool IntegratedRunner::menuBar( ImGuiWrapper& imGuiWrapper ) {
                 imGuiWrapper.menuItem( entry.name(), app && app->display() && app->stayOpen(), true,
                                        [ & ]() {
                                            LOG4CPLUS_INFO( GetLogger(), entry.name() << " selected" );
-                                           if ( app ) app->display( !app->display());
-                                           else apps.emplace_back( entry.makeApp( imGuiWrapper ));
+                                           if ( !app ) app = apps.emplace_back( entry.makeApp( imGuiWrapper ));
+                                           app->display( !app->display());
                                        } );
             }
         } );

@@ -26,10 +26,9 @@ namespace aima::core {
 
         virtual ~App() = default;
 
-        /**
-         * Renders the app
-         */
-        virtual void render() = 0;
+        void render() {
+            if ( display()) renderImpl();
+        }
 
         [[nodiscard]]  bool display() const noexcept { return display_; }
 
@@ -47,7 +46,12 @@ namespace aima::core {
         gui::ImGuiWrapper& imGuiWrapper() noexcept { return imGuiWrapper_; }
 
     private:
-        std::atomic_bool display_ = true;
+        /**
+         * Renders the app
+         */
+        virtual void renderImpl() = 0;
+
+        std::atomic_bool display_ = false;
         gui::ImGuiWrapper& imGuiWrapper_;
     };
 }

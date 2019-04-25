@@ -8,6 +8,7 @@
 #include "core/Environment.hpp"
 #include "util/StringBuilder.hpp"
 #include "util/define_logger.hpp"
+#include "util/AssetManager.hpp"
 
 
 using namespace aima::core;
@@ -54,12 +55,19 @@ namespace {
 constexpr std::string_view RUN  = "Run";
 constexpr std::string_view STOP = "Stop";
 
-GraphicViewer::GraphicViewer( std::string_view title, bool* open, std::string_view str_id ) :
+GraphicViewer::GraphicViewer( AssetLoader assetLoader,
+                              std::string_view title,
+                              bool* open,
+                              std::string_view str_id ) :
         console(),
         simpleViewer( console ),
         windowConfigs( makeWindowConfigs( title, open, str_id )),
         runButtonText( RUN ),
         scrollConsole( true ),
+        assetHandles( assetLoader ? assetLoader() : []() -> AssetHandles {
+            using namespace aima::core::exception;
+            AIMA_THROW_EXCEPTION( Exception{} << Because( "Graphic viewer received null asset loader" ));
+        }()),
         firstRender( false ),
         title( title ),
         open( open ),
@@ -102,6 +110,11 @@ void GraphicViewer::setEnvironment( const shared_ptr<Environment>& environment )
 
 bool GraphicViewer::render( gui::ImGuiWrapper& imGuiWrapper ) {
     TRACE;
+    if ( !initialized ) {
+        // throw instead of just initializing because initialization should not happen in the render loop
+        using namespace aima::core::exception;
+        AIMA_THROW_EXCEPTION( Exception{} << Because( "GraphicViewer cannot be rendered before init() is called" ));
+    }
     checkAsyncException();
 
     using namespace ImGui;
@@ -119,6 +132,8 @@ bool GraphicViewer::render( gui::ImGuiWrapper& imGuiWrapper ) {
         Columns( 1 );
     } );
 }
+
+GraphicViewer::~GraphicViewer() = default;
 
 void GraphicViewer::renderConsoleArea( ImGuiWrapper& imGuiWrapper, const std::shared_ptr<Environment>& environment ) {
     TRACE;
