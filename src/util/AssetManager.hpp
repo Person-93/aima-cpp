@@ -36,8 +36,6 @@ namespace aima::util::AssetManager {
         Storage& storage();
     }
 
-    void initialize( const std::filesystem::path& dbFile = std::filesystem::path{} );
-
     class AssetHandle {
     public:
         AssetHandle() : id_( 0 ) {}
@@ -65,10 +63,12 @@ namespace aima::util::AssetManager {
         size_t id_;
     };
 
+    void setAssetDir( std::filesystem::path path );
+
     template< typename T >
     std::function<void( const std::filesystem::path&, void* )> assetFactory() {
-        static_assert( std::is_constructible_v<T, const std::filesystem::path&>,
-                       "Types that cannot be constructed from a std::filesystem::path"
+        static_assert( std::is_constructible_v<T, std::filesystem::path>,
+                       "Types that cannot be constructed from a std::filesystem::path "
                        "need to specialize the assetFactory method" );
         return []( const std::filesystem::path& path, void* p ) {
             new( p ) T( path );
@@ -101,7 +101,7 @@ namespace aima::util::AssetManager {
     }
 
     template< typename T >
-    const T& get( std::string_view tag ) try {
+    T& get( std::string_view tag ) try {
         using detail::GetLogger;
         TRACE;
         LOG4CPLUS_DEBUG( GetLogger(), "Getting asset \"" << tag << '"' );

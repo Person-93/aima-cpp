@@ -68,3 +68,7 @@ add_library ( app_base
 target_link_libraries ( app_base PRIVATE stb )
 target_link_libraries ( app_base PUBLIC imgui common Threads::Threads )
 target_link_libraries ( app_base INTERFACE asset_manager )
+
+execute_process (
+        COMMAND ${CMAKE_COMMAND} -E create_symlink ${PROJECT_SOURCE_DIR}/assets ${CMAKE_CURRENT_BINARY_DIR}/assets
+)

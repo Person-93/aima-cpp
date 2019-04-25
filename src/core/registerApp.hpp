@@ -55,16 +55,18 @@ namespace aima::IntegratedRunner::detail {
 #include <boost/exception/exception.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include "util/configure_logging.hpp"
+#include "util/AssetManager.hpp"
 #include "version.hpp"
 
 #define AIMA_REGISTER_APP( AppClass ) \
 std::atomic_bool shouldRun = true;    \
 extern "C" void handler( int ){ shouldRun = false; } \
-int main() try {                      \
+int main( int argc, char* argv[] ) try {             \
     std::signal( SIGTERM, handler );  \
     using namespace aima::apps;       \
     aima::util::ConfigureLogging();   \
     LOG4CPLUS_INFO( log4cplus::Logger::getRoot(), "Running aima-cpp version: " << aima::version::longVersion() ); \
+    aima::util::AssetManager::setAssetDir( std::filesystem::weakly_canonical( argv[ 0 ] ).parent_path() / "assets" ); \
     aima::gui::standAloneApp<AppClass>( shouldRun ); \
     LOG4CPLUS_DEBUG( log4cplus::Logger::getRoot(), "Application exiting normally" ); \
     return 0;                         \

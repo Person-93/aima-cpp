@@ -58,12 +58,42 @@ namespace {
         }
     };
 
-    std::unique_ptr<database> db = nullptr;
+    std::filesystem::path assetDir = ""; // NOLINT(cert-err58-cpp)
+
+    database db() {
+        static database db_ = []() {
+            try {
+                database db__( ":memory:" );
+
+                ( db__ << R"(
+CREATE TABLE assets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    idx INTEGER DEFAULT 0,
+    type_hash INTEGER NOT NULL,
+    path TEXT NOT NULL UNIQUE,
+    quantity INTEGER DEFAULT 1
+)
+)" ).execute();
+
+                ( db__ << R"(
+CREATE TABLE tags (
+    asset_id INTEGER NOT NULL,
+    tag TEXT NOT NULL
+)
+)" ).execute();
+                return db__;
+            }
+            catch ( const sqlite::sqlite_exception& e ) {
+                AIMA_THROW_EXCEPTION( SqliteException(e) << SqlTransaction("Create database"));
+            }
+        }();
+        return db_;
+    }
 
     class Transaction {
     public:
         Transaction() {
-            *db << "BEGIN";
+            db() << "BEGIN";
         }
 
         void commit() {
@@ -72,7 +102,7 @@ namespace {
                 AIMA_THROW_EXCEPTION( Exception{} << Because( "Cannot commit transaction that is already complete" ));
             }
             completed = true;
-            *db << "COMMIT";
+            db() << "COMMIT";
         }
 
         void rollback() {
@@ -81,7 +111,7 @@ namespace {
                 AIMA_THROW_EXCEPTION( Exception{} << Because( "Cannot rollback transaction that is already complete" ));
             }
             completed = true;
-            *db << "ROLLBACK;";
+            db() << "ROLLBACK;";
         }
 
         ~Transaction() {
@@ -118,7 +148,7 @@ namespace {
     class Statement {
     public:
         Statement( std::string_view query ) try : // NOLINT(google-explicit-constructor)
-                Statement( *db << query.data()) {}
+                Statement( db() << query.data()) {}
         catch ( const sqlite::sqlite_exception& e ) {
             AIMA_THROW_EXCEPTION( SqliteException(e) << SqlTransaction("Preparing statement"));
         }
@@ -240,7 +270,7 @@ namespace {
     }
 
     AssetInfo getAsset( std::string_view tag, std::type_index type ) try {
-        static Statement statement = *db << R"(
+        static Statement statement = db() << R"(
 SELECT a.id, a.idx, a.quantity, a.type_hash
 FROM tags t
 INNER JOIN assets a
@@ -263,9 +293,9 @@ WHERE a.type_hash = ?
      * @return The ID of the newly inserted asset
      */
     size_t insertAsset( const std::filesystem::path& path, size_t typeHash, size_t index ) try {
-        static Statement statement = *db << "INSERT INTO assets( path, type_hash, idx ) VALUES( ?, ?, ? )";
+        static Statement statement = db() << "INSERT INTO assets( path, type_hash, idx ) VALUES( ?, ?, ? )";
         statement.instance() << path.c_str() << typeHash << index << execute;
-        return static_cast<size_t>(db->last_insert_rowid());
+        return static_cast<size_t>(db().last_insert_rowid());
     }
     catch ( const sqlite::sqlite_exception& e ) {
         AIMA_THROW_EXCEPTION( SqliteException(e) << SqlTransaction("Insert new asset"));
@@ -278,7 +308,7 @@ WHERE a.type_hash = ?
      * @param path
      */
     void incrementHandleCount( size_t id ) try {
-        static Statement statement = *db << "UPDATE assets SET quantity = quantity + 1 WHERE id = ?";
+        static Statement statement = db() << "UPDATE assets SET quantity = quantity + 1 WHERE id = ?";
         statement.instance() << id << execute;
     }
     catch ( const sqlite::sqlite_exception& e ) {
@@ -291,7 +321,7 @@ WHERE a.type_hash = ?
      * @return The count before decrementing
      */
     void decrementHandleCount( size_t id ) try {
-        static Statement decrement = *db << "UPDATE assets SET quantity = quantity - 1 WHERE id = ?";
+        static Statement decrement = db() << "UPDATE assets SET quantity = quantity - 1 WHERE id = ?";
         decrement.instance() << id << execute;
     }
     catch ( const sqlite::sqlite_exception& e ) {
@@ -299,7 +329,7 @@ WHERE a.type_hash = ?
     }
 
     void insertTag( size_t id, std::string_view tag ) try {
-        static Statement insertTag = *db << "INSERT INTO tags( asset_id, tag ) VALUES(?,?)";
+        static Statement insertTag = db() << "INSERT INTO tags( asset_id, tag ) VALUES(?,?)";
         std::move( insertTag.instance() << id << tag ) << execute;
     }
     catch ( const sqlite::sqlite_exception& e ) {
@@ -308,38 +338,46 @@ WHERE a.type_hash = ?
 
 }
 
-void ::aima::util::AssetManager::initialize( const std::filesystem::path& dbFile ) {
-    try {
-        auto d = std::make_unique<database>( dbFile.empty() ? ":memory:" : dbFile.c_str());
-
-        ( *d << R"(
-CREATE TABLE assets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    idx INTEGER DEFAULT 0,
-    type_hash INTEGER NOT NULL,
-    path TEXT NOT NULL UNIQUE,
-    quantity INTEGER DEFAULT 1
-)
-)" ).execute();
-
-        ( *d << R"(
-CREATE TABLE tags (
-    asset_id INTEGER NOT NULL,
-    tag TEXT NOT NULL
-)
-)" ).execute();
-
-        db = std::move( d );
+namespace {
+    bool isDirectory( const std::filesystem::path& path ) {
+        using namespace std::filesystem;
+        if ( is_symlink( path )) return isDirectory( read_symlink( path ));
+        return is_directory( path );
     }
-    catch ( const sqlite::sqlite_exception& e ) {
-        AIMA_THROW_EXCEPTION( SqliteException(e) << SqlTransaction("Create database"));
+}
+
+void ::aima::util::AssetManager::setAssetDir( std::filesystem::path path ) {
+    if ( !std::filesystem::exists( path )) {
+        using namespace aima::core::exception;
+        AIMA_THROW_EXCEPTION( Exception{} << Because(
+                util::StringBuilder( 256 ) << "Asset directory " << path << " does not exist" ));
     }
-};
+
+    if ( !isDirectory( path )) {
+        using namespace aima::core::exception;
+        using aima::util::StringBuilder;
+        AIMA_THROW_EXCEPTION(
+                Exception{} << Because( StringBuilder( 256 ) << "Asset directory must be a directory, got:" << path ));
+
+    }
+
+    assetDir = std::move( path );
+}
 
 AssetHandle detail::add( std::filesystem::path path,
                          std::string_view tag,
                          size_t typeHash,
                          std::function<void( std::filesystem::path, void* )> factory ) {
+    if ( path.is_relative()) {
+        if ( assetDir == "" ) {
+            using namespace aima::core::exception;
+            AIMA_THROW_EXCEPTION(
+                    Exception{} << Because( "Asset path must be absolute if setAssetDir() was not called" ));
+        }
+
+        path = assetDir / path;
+    }
+
     Transaction t;
 
     AssetInfo info = getAsset( path );
