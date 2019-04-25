@@ -31,7 +31,7 @@ Image::Image( const std::filesystem::path& path ) : data( stbi_load( path.c_str(
     if ( data == nullptr ) {
         using namespace aima::core::exception;
         AIMA_THROW_EXCEPTION( Exception{} << Because(
-                util::StringBuilder( 512 ) << "Failed to load image \"" << path << "\": " << stbi_failure_reason()));
+                util::StringBuilder( 512 ) << "Failed to load image " << path << ": " << stbi_failure_reason()));
     }
 
     LOG4CPLUS_DEBUG( GetLogger(), "Loaded image " << path << " at " << static_cast<void*>(data));
