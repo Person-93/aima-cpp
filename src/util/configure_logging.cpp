@@ -17,8 +17,7 @@ using namespace log4cplus::spi;
 class SpecialConsoleAppender : public Appender {
 protected:
     void append( const spi::InternalLoggingEvent& event ) override {
-        const auto level = event.getLogLevel();
-        if ( level <= INFO_LOG_LEVEL )
+        if ( const auto level = event.getLogLevel(); level <= INFO_LOG_LEVEL )
             normalLayout().formatAndAppend( std::cout, event );
         else if ( level <= ERROR_LOG_LEVEL )
             normalLayout().formatAndAppend( std::cerr, event );

@@ -35,8 +35,8 @@ namespace aima::util {
 
         protected:
             std::streamsize xsputn( const Char* s, std::streamsize count ) override {
-                const auto spaceRemaining = this->epptr() - this->pptr();
-                if ( count > spaceRemaining ) count = spaceRemaining;
+                if ( const auto  spaceRemaining = this->epptr() - this->pptr(); count > spaceRemaining )
+                    count = spaceRemaining;
                 const StringView stringView( s, static_cast<typename StringView::size_type>(count));
                 string += stringView;
                 this->pbump( static_cast<int>(count));

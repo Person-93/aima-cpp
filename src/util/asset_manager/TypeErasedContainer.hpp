@@ -47,9 +47,8 @@ namespace aima::util::AssetManager::detail {
 
                     // indexer
                     []( size_t i, void* p ) -> void* {
-                        auto   pVector     = static_cast<Vector*>(p);
-                        size_t desiredSize = i + 1;
-                        if ( pVector->size() < desiredSize ) {
+                        auto        pVector     = static_cast<Vector*>(p);
+                        if ( size_t desiredSize = i + 1; pVector->size() < desiredSize ) {
                             AIMA_THROW_EXCEPTION(
                                     AssetManagerException{}
                                             << TypeErasedAction(

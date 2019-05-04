@@ -65,14 +65,12 @@ VacuumGui::VacuumGui( std::string_view title, bool* open, std::string_view str_i
         bigBuffer( string( 256 )) {
     TRACE;
     namespace AssetManager = util::AssetManager;
-
-    auto& dustyImage = AssetManager::get<gui::Image>( Images::DUSTY_BACKGROUND );
 }
 
 void VacuumGui::setEnvironment( const std::shared_ptr<Environment>& environment ) {
     TRACE;
-    auto p = std::dynamic_pointer_cast<BasicVacuumEnvironment>( environment );
-    if ( !p ) {
+
+    if ( auto p = std::dynamic_pointer_cast<BasicVacuumEnvironment>( environment ); !p ) {
         using namespace aima::core::exception;
         AIMA_THROW_EXCEPTION( Exception{} << EnvironmentViewType( util::parseTitle<VacuumGui>())
                                           << Because( "Received unrecognized environment" ));
