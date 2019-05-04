@@ -5,6 +5,10 @@ add_library ( integrated_app
               integrated/IntegratedDemo.hpp
               integrated/DemoRegistry.cpp
               integrated/DemoRegistry.hpp
+              core/DemoRegistryEntry.cpp
+              core/DemoRegistryEntry.hpp
+              core/AppRegistryEntry.cpp
+              core/AppRegistryEntry.hpp
               integrated/AppRegistry.cpp
               integrated/IntegratedDemo.hpp
               integrated/forward.hpp

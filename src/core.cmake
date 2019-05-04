@@ -46,8 +46,6 @@ target_link_libraries ( asset_manager PUBLIC common stdc++fs )
 add_library ( demo_base
               core/Demo.cpp
               core/Demo.hpp
-              core/DemoRegistryEntry.cpp
-              core/DemoRegistryEntry.hpp
               )
 target_link_libraries ( demo_base PUBLIC common )
 
@@ -56,8 +54,6 @@ add_library ( app_base
               core/App.hpp
               core/AppPtr.cpp
               core/AppPtr.hpp
-              core/AppRegistryEntry.cpp
-              core/AppRegistryEntry.hpp
               gui/Image.hpp
               gui/Image.cpp
               views/GraphicViewer.cpp
@@ -68,6 +64,7 @@ add_library ( app_base
 target_link_libraries ( app_base PRIVATE stb )
 target_link_libraries ( app_base PUBLIC imgui common Threads::Threads )
 target_link_libraries ( app_base INTERFACE asset_manager )
+target_compile_definitions ( app_base PRIVATE AIMA_ENVIRONMENT_THREAD_SAFE=true )
 
 execute_process (
         COMMAND ${CMAKE_COMMAND} -E create_symlink ${PROJECT_SOURCE_DIR}/assets ${CMAKE_CURRENT_BINARY_DIR}/assets
