@@ -29,16 +29,16 @@ namespace aima::util {
                 return a.unique_id_ == b.unique_id_;
             }
 
+            UniqueIdBase( const UniqueIdBase& ) noexcept = delete;
+
+            UniqueIdBase& operator=( const UniqueIdBase& ) = delete;
+
         protected:
             UniqueIdBase() noexcept = default;
 
-            UniqueIdBase( const UniqueIdBase<T>& ) noexcept = default;
+            UniqueIdBase( UniqueIdBase&& ) noexcept = default;
 
-            UniqueIdBase( UniqueIdBase<T>&& ) noexcept = default;
-
-            UniqueIdBase& operator=( const UniqueIdBase<T>& ) noexcept = default;
-
-            UniqueIdBase& operator=( UniqueIdBase<T>&& ) noexcept = default;
+            UniqueIdBase& operator=( UniqueIdBase&& ) noexcept = default;
 
             ~UniqueIdBase() = default;
 
@@ -91,10 +91,6 @@ namespace aima::util {
         UniqueIdMixin( const UniqueIdMixin& ) noexcept = default;
 
         UniqueIdMixin( UniqueIdMixin&& ) noexcept = default;
-
-        UniqueIdMixin& operator=( const UniqueIdMixin& ) noexcept = default;
-
-        UniqueIdMixin& operator=( UniqueIdMixin&& ) noexcept = default;
 
         ~UniqueIdMixin() = default;
     };
