@@ -1,4 +1,4 @@
-#include "../src/version.hpp"
+#include "version.hpp"
 
 const unsigned long long aima::version::major = @VERSION_MAJOR@;
 const unsigned long long aima::version::minor = @VERSION_MINOR@;
