@@ -24,7 +24,7 @@ add_library ( common
               util/type_traits.hpp
               util/UniqueIdMixin.hpp
               )
-target_link_libraries ( common PUBLIC version logging atomic )
+target_link_libraries ( common PUBLIC version logging atomic Threads::Threads )
 
 add_library ( imgui
               gui/ImGuiWrapper.hpp
@@ -62,9 +62,8 @@ add_library ( app_base
               gui/OutputConsoleWidget.hpp
               )
 target_link_libraries ( app_base PRIVATE stb )
-target_link_libraries ( app_base PUBLIC imgui common Threads::Threads )
+target_link_libraries ( app_base PUBLIC imgui common )
 target_link_libraries ( app_base INTERFACE asset_manager )
-target_compile_definitions ( app_base PRIVATE AIMA_ENVIRONMENT_THREAD_SAFE=true )
 
 execute_process (
         COMMAND ${CMAKE_COMMAND} -E create_symlink ${PROJECT_SOURCE_DIR}/assets ${CMAKE_CURRENT_BINARY_DIR}/assets
