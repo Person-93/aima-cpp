@@ -25,7 +25,7 @@ namespace aima::util {
                 }
             };
 
-            friend bool operator==( const T& a, const T& b ) noexcept {
+            friend bool operator==( const UniqueIdBase& a, const UniqueIdBase& b ) noexcept {
                 return a.unique_id_ == b.unique_id_;
             }
 
