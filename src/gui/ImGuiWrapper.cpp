@@ -9,11 +9,6 @@
 #include "util/define_logger.hpp"
 
 
-class ChildWindow;
-class MainMenu;
-class Menu;
-class Window;
-
 using namespace aima::gui;
 
 DEFINE_LOGGER( ImGuiWrapper );
@@ -154,56 +149,9 @@ ImGuiWrapper::Frame::~Frame() {
     inFrame = false;
 }
 
-#define WIDGET( widget, close, AlwaysClose ) \
-class widget {                               \
-public:                                      \
-    CONSTRUCTORS                             \
-    ~widget() {                              \
-    TRACE;                                   \
-        if( AlwaysClose || opened ) close(); \
-    }                                        \
-    operator bool() { return opened; }       \
-private:                                     \
-    bool opened;                             \
-}
-
-#define CONSTRUCTORS Window(std::string_view title, bool* open, ImGuiWindowFlags flags) { \
-    TRACE;                                             \
-    opened = ImGui::Begin(title.begin(), open, flags); \
-}
-
-WIDGET( Window, ImGui::End, true );
-
-#undef CONSTRUCTORS
-
-bool ImGuiWrapper::window( WindowConfig& config, std::function<void()> function ) {
-    TRACE;
-
-    Window w( config.title.c_str(), config.open, config.flags );
-    if ( w ) function();
-    return w;
-}
-
 bool ImGuiWrapper::shouldClose() {
     TRACE;
     return bool( glfwWindowShouldClose( glfwWindow ));
-}
-
-#define CONSTRUCTORS ChildWindow(std::string_view str_id, const ImVec2& size, bool border, ImGuiWindowFlags flags) { \
-    TRACE;\
-    opened = ImGui::BeginChild( str_id.begin(), size, border, flags ); \
-}
-
-WIDGET( ChildWindow, ImGui::EndChild, true );
-
-#undef CONSTRUCTORS
-
-bool ImGuiWrapper::childWindow( ChildWindowConfig& config, std::function<void()> function ) {
-    TRACE;
-
-    ChildWindow w( config.str_id.c_str(), config.size, config.border, config.flags );
-    if ( w ) function();
-    return w;
 }
 
 void ImGuiWrapper::setWindowTitle( std::string_view title ) {
@@ -215,42 +163,6 @@ void ImGuiWrapper::setWindowTitle( std::string_view title ) {
 ImGuiWrapper::DisableControls ImGuiWrapper::disableControls( bool disable ) {
     TRACE;
     return ImGuiWrapper::DisableControls( disable );
-}
-
-#define CONSTRUCTORS MainMenu() {       \
-    TRACE;                              \
-    opened = ImGui::BeginMainMenuBar(); \
-}
-
-WIDGET( MainMenu, ImGui::EndMainMenuBar, false );
-
-bool ImGuiWrapper::mainMenu( std::function<void()> function ) {
-    TRACE;
-    MainMenu m;
-    if ( m ) function();
-    return m;
-}
-
-#undef CONSTRUCTORS
-#define CONSTRUCTORS Menu( std::string_view label, bool enabled ) { \
-    TRACE;                                                          \
-    opened = ImGui::BeginMenu( label.begin(), enabled );            \
-}
-
-WIDGET( Menu, ImGui::EndMenu, false );
-
-void ImGuiWrapper::menu( std::string_view label, bool enabled, std::function<void()> function ) {
-    TRACE;
-    Menu m( label, enabled );
-    if ( m ) function();
-}
-
-#undef CONSTRUCTORS
-#undef WIDGET
-
-void ImGuiWrapper::menuItem( std::string_view label, bool selected, bool enabled, std::function<void()> function ) {
-    TRACE;
-    if ( ImGui::MenuItem( label.begin(), nullptr, selected, enabled )) function();
 }
 
 ImGuiWrapper::DisableControls::DisableControls( bool disable ) : disabled( false ) {
@@ -283,6 +195,4 @@ void ImGuiWrapper::DisableControls::enable() {
 
 #include "imgui_config.hpp"
 
-log4cplus::Logger& aima::gui::detail::GetLogger() {
-    return ::GetLogger();
-}
+log4cplus::Logger& aima::gui::detail::GetLogger() { return ::GetLogger(); }

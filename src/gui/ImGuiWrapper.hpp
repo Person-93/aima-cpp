@@ -4,6 +4,20 @@
 #include <functional>
 #include <string>
 #include "imgui.h" // IWYU pragma: export
+#include "util/define_logger.hpp"
+
+#define AIMA_IMGUI_WRAPPER_WIDGET( widget, close, AlwaysClose ) \
+class widget {                               \
+public:                                      \
+    CONSTRUCTORS                             \
+    ~widget() {                              \
+        TRACE;                               \
+        if( AlwaysClose || opened ) close(); \
+    }                                        \
+    operator bool() & { return opened; }     \
+private:                                     \
+    bool opened;                             \
+}
 
 namespace aima::gui {
     struct WindowConfig {
@@ -44,9 +58,44 @@ namespace aima::gui {
 
         Frame frame();
 
-        bool window( WindowConfig& config, std::function<void()> function );
+        template< typename Function >
+        bool window( WindowConfig& config, Function function ) {
+            static_assert( std::is_invocable_v<Function> );
 
-        bool childWindow( ChildWindowConfig& config, std::function<void()> function );
+            using detail::GetLogger;
+#define CONSTRUCTORS Window(std::string_view title, bool* open, ImGuiWindowFlags flags) { \
+    TRACE;                                             \
+    opened = ImGui::Begin(title.begin(), open, flags); \
+}
+            AIMA_IMGUI_WRAPPER_WIDGET( Window, ImGui::End, true );
+#undef CONSTRUCTORS
+
+            TRACE;
+
+            Window w( config.title.c_str(), config.open, config.flags );
+            if ( w ) function();
+            return w;
+        }
+
+
+        template< typename Function >
+        bool childWindow( ChildWindowConfig& config, Function function ) {
+            static_assert( std::is_invocable_v<Function> );
+
+            using detail::GetLogger;
+#define CONSTRUCTORS ChildWindow(std::string_view str_id, const ImVec2& size, bool border, ImGuiWindowFlags flags) { \
+    TRACE;                                                             \
+    opened = ImGui::BeginChild( str_id.begin(), size, border, flags ); \
+}
+            AIMA_IMGUI_WRAPPER_WIDGET( ChildWindow, ImGui::EndChild, true );
+#undef CONSTRUCTORS
+
+            TRACE;
+
+            ChildWindow w( config.str_id.c_str(), config.size, config.border, config.flags );
+            if ( w ) function();
+            return w;
+        }
 
         class DisableControls {
         private:
@@ -67,12 +116,48 @@ namespace aima::gui {
 
         DisableControls disableControls( bool disable = true );
 
-        bool mainMenu( std::function<void()> function );
+        template< typename Function >
+        bool mainMenu( Function function ) {
+            static_assert( std::is_invocable_v<Function> );
 
-        void menu( std::string_view label, bool enabled, std::function<void()> function );
-
-        void menuItem( std::string_view label, bool selected, bool enabled, std::function<void()> function );
-    };
-
-
+            using detail::GetLogger;
+#define CONSTRUCTORS MainMenu() {       \
+    TRACE;                              \
+    opened = ImGui::BeginMainMenuBar(); \
 }
+            AIMA_IMGUI_WRAPPER_WIDGET( MainMenu, ImGui::EndMainMenuBar, false );
+#undef CONSTRUCTORS
+
+            TRACE;
+            MainMenu m;
+            if ( m ) function();
+            return m;
+        }
+
+        template< typename Function >
+        void menu( std::string_view label, bool enabled, Function function ) {
+            static_assert( std::is_invocable_v<Function> );
+
+            using detail::GetLogger;
+#define CONSTRUCTORS Menu( std::string_view label, bool enabled ) { \
+    TRACE;                                                          \
+    opened = ImGui::BeginMenu( label.begin(), enabled );            \
+}
+            AIMA_IMGUI_WRAPPER_WIDGET( Menu, ImGui::EndMenu, false );
+#undef CONSTRUCTORS
+
+            TRACE;
+            if ( Menu m( label, enabled ); m ) function();
+        }
+
+        template< typename Function >
+        void menuItem( std::string_view label, bool selected, bool enabled, Function function ) {
+            static_assert( std::is_invocable_v<Function> );
+            using detail::GetLogger;
+            TRACE;
+            if ( ImGui::MenuItem( label.begin(), nullptr, selected, enabled )) function();
+        }
+    };
+}
+
+#undef AIMA_IMGUI_WRAPPER_WIDGET
