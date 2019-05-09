@@ -71,12 +71,6 @@ namespace aima::viewer {
          */
         bool render( gui::ImGuiWrapper& imGuiWrapper );
 
-        /**
-         * This method is not thread safe and should only be called from the owning thread
-         * @param str_id
-         */
-        void setStrId( std::string_view str_id );
-
     protected:
         virtual void initMethod( gui::ImGuiWrapper& imGuiWrapper ) {}
 
@@ -124,8 +118,8 @@ namespace aima::viewer {
         bool                             firstRender;
         const std::string_view           title;
         bool* const open;
-        std::string_view str_id;
-        bool             initialized = false;
+        std::string str_id;
+        bool        initialized = false;
     };
 }
 

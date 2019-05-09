@@ -9,7 +9,7 @@
 #include "util/StringBuilder.hpp"
 #include "util/define_logger.hpp"
 #include "util/AssetManager.hpp"
-
+#include "util/random_string.hpp"
 
 using namespace aima::core;
 using namespace aima::gui;
@@ -22,6 +22,9 @@ using std::weak_ptr;
 using std::make_shared;
 
 DEFINE_LOGGER( GraphicViewer );
+
+#define LOG_GUI_EVENT( event ) LOG4CPLUS_DEBUG( GetLogger(), "Viewer-id: " << this->str_id << " Event: " << event )
+#define LOG_BUTTON_PRESS( button ) LOG_GUI_EVENT( button << " button pressed" )
 
 namespace {
     using aima::viewer::detail::WindowConfigs;
@@ -71,7 +74,10 @@ GraphicViewer::GraphicViewer( AssetLoader assetLoader,
         firstRender( false ),
         title( title ),
         open( open ),
-        str_id( str_id ) { TRACE; }
+        str_id( str_id.empty() ? util::random_string( 10 ) : str_id ) {
+    TRACE;
+    LOG_GUI_EVENT( "Created" );
+}
 
 void GraphicViewer::notify( string_view message ) {
     TRACE;
@@ -133,7 +139,10 @@ bool GraphicViewer::render( gui::ImGuiWrapper& imGuiWrapper ) {
     } );
 }
 
-GraphicViewer::~GraphicViewer() = default;
+GraphicViewer::~GraphicViewer() {
+    TRACE;
+    LOG_GUI_EVENT( "Destroyed" );
+}
 
 void GraphicViewer::renderConsoleArea( ImGuiWrapper& imGuiWrapper, const std::shared_ptr<Environment>& environment ) {
     TRACE;
@@ -148,33 +157,47 @@ void GraphicViewer::renderConsoleArea( ImGuiWrapper& imGuiWrapper, const std::sh
 void GraphicViewer::renderButtons( ImGuiWrapper& imGuiWrapper, const std::shared_ptr<Environment>& environment ) {
     TRACE;
     if ( SmallButton( "Step" ))
-        thread( []( shared_ptr<Environment> env ) {
-            if ( env && !env->isRunning())
+        thread( [ this ]( shared_ptr<Environment> env ) {
+            LOG_BUTTON_PRESS( "Step" );
+            if ( env && !env->isRunning()) {
+                LOG_GUI_EVENT( "Stepping" );
                 env->step();
+            }
         }, environment )
                 .detach();
     SameLine();
 
-    if ( SmallButton( runButtonText.dirtyRead().begin()))
-        thread( [ &runButtonText = this->runButtonText ]( shared_ptr<Environment> env ) {
+    if ( const string_view buttonText = runButtonText.dirtyRead(); SmallButton( buttonText.begin()))
+        thread( [ this, buttonText ]( shared_ptr<Environment> env ) {
+            LOG_BUTTON_PRESS( buttonText );
             if ( !env ) return;
             runButtonText = STOP;
-            if ( env->isRunning()) env->stop();
-            else env->stepUntilDone();
+            if ( env->isRunning()) {
+                LOG_GUI_EVENT( "Stopping" );
+                env->stop();
+            }
+            else {
+                LOG_GUI_EVENT( "Running" );
+                env->stepUntilDone();
+            }
             runButtonText = RUN;
         }, environment )
                 .detach();
     SameLine();
 
-    if ( SmallButton( "Clear" ))
-        thread( [ &console = this->console ]() {
+    if ( constexpr string_view buttonText = "Clear"; SmallButton( buttonText.begin()))
+        thread( [ this, buttonText ]() {
+            LOG_BUTTON_PRESS( buttonText );
+            LOG_GUI_EVENT( "Clearing Console" );
             console.clear();
         } )
                 .detach();
     SameLine();
 
-    if ( SmallButton( "Scroll" ))
-        thread( [ &scrollConsole = this->scrollConsole ]() {
+    if ( constexpr string_view buttonText = "Scroll"; SmallButton( buttonText.begin()))
+        thread( [ this, buttonText ]() {
+            LOG_BUTTON_PRESS( buttonText );
+            LOG_GUI_EVENT( "Toggling console scroll" );
             scrollConsole.access( []( bool& b ) { b = !b; } );
         } )
                 .detach();
@@ -245,8 +268,5 @@ std::thread GraphicViewer::thread( Function&& function, Args&& ... args ) {
                           forward<Args>( args )... );
 }
 
-void GraphicViewer::setStrId( string_view str_id ) {
-    TRACE;
-    LOG4CPLUS_INFO( GetLogger(), "String id was set to " << str_id );
-    windowConfigs = makeWindowConfigs( title, open, str_id );
-}
+#undef LOG_BUTTON_PRESS
+#undef LOG_GUI_EVENT
