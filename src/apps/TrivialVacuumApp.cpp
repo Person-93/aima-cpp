@@ -29,6 +29,6 @@ void TrivialVacuumApp::renderImpl() {
     vacuumGui.render( imGuiWrapper());
 }
 
-aima::core::Environment& TrivialVacuumApp::environment() noexcept { return *environment_; }
+std::shared_ptr<aima::core::Environment>& TrivialVacuumApp::environment() noexcept { return environment_; }
 
 aima::viewer::GraphicViewer& aima::apps::TrivialVacuumApp::viewer() noexcept { return vacuumGui; }

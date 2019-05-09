@@ -1,6 +1,8 @@
 #pragma once
 
 #include <atomic>
+#include <memory>
+#include "util/UniqueIdMixin.hpp"
 
 namespace aima::gui { struct ImGuiWrapper; }
 namespace aima::core { class Environment; }
@@ -10,7 +12,7 @@ namespace aima::core {
     /**
      * An App that can be run as a standalone or as part of an integrated app
      */
-    class App {
+    class App : public util::UniqueIdMixin<App, true> {
     public:
         explicit App( gui::ImGuiWrapper& imGuiWrapper );
 
@@ -24,7 +26,7 @@ namespace aima::core {
 
         App& operator=( App&& ) = delete;
 
-        virtual ~App() = default;
+        virtual ~App();
 
         void render() {
             if ( display()) renderImpl();
@@ -36,7 +38,7 @@ namespace aima::core {
 
         [[nodiscard]] bool stayOpen() const noexcept { return stayOpen_; }
 
-        virtual Environment& environment() noexcept = 0;
+        virtual std::shared_ptr<Environment>& environment() noexcept = 0;
 
         virtual viewer::GraphicViewer& viewer() noexcept = 0;
 

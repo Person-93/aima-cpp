@@ -17,15 +17,15 @@ namespace aima::apps {
     public:
         explicit TrivialVacuumApp( gui::ImGuiWrapper& imGuiWrapper );
 
-        core::Environment& environment() noexcept override;
+        std::shared_ptr<core::Environment>& environment() noexcept override;
 
         viewer::GraphicViewer& viewer() noexcept override;
 
     private:
         void renderImpl() override;
 
-        vacuum::VacuumGui                               vacuumGui;
-        std::shared_ptr<vacuum::BasicVacuumEnvironment> environment_;
-        vacuum::BasicVacuumAgent                        agent;
+        vacuum::VacuumGui                  vacuumGui;
+        std::shared_ptr<core::Environment> environment_;
+        vacuum::BasicVacuumAgent           agent;
     };
 }

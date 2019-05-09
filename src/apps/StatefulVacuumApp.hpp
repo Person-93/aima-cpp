@@ -14,16 +14,16 @@ namespace aima::apps {
     public:
         explicit StatefulVacuumApp( gui::ImGuiWrapper& imGuiWrapper );
 
-        core::Environment& environment() noexcept override;
+        std::shared_ptr<core::Environment>& environment() noexcept override;
 
         viewer::GraphicViewer& viewer() noexcept override;
 
     private:
         void renderImpl() override;
 
-        vacuum::VacuumGui                               vacuumGui;
-        std::shared_ptr<vacuum::BasicVacuumEnvironment> environment_;
-        vacuum::StatefulVacuumAgent                     agent;
+        vacuum::VacuumGui                  vacuumGui;
+        std::shared_ptr<core::Environment> environment_;
+        vacuum::StatefulVacuumAgent        agent;
     };
 
 }
