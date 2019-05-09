@@ -5,19 +5,10 @@
 #include <cstddef>
 #include <memory>
 #include <utility>
-#include "EnvironmentView.hpp"
+#include <mutex>
+#include "EnvironmentDestroyedView.hpp"
 
 // IWYU pragma: no_include "App.hpp"
-
-namespace aima::core {
-    class Action;
-
-    class Agent;
-
-    class Environment;
-
-    class Percept;
-}
 
 namespace aima::core { class App; } // IWYU pragma: keep
 
@@ -26,7 +17,7 @@ namespace aima::IntegratedRunner {
         /**
          * This class owns the memory in which heap-allocated Apps live
          */
-        class ControlBlock : private core::EnvironmentView {
+        class ControlBlock : private core::EnvironmentDestroyedView {
         public:
             using App         = aima::core::App;
             using InternalPtr = App*;
@@ -41,11 +32,11 @@ namespace aima::IntegratedRunner {
 
             const App* operator->() const { return operator*(); }
 
-            void point() noexcept { ++ptrCount; }
+            void point() noexcept;
 
             void unPoint() noexcept;
 
-            void addWeak() noexcept { ++weakPtrCount; }
+            void addWeak() noexcept;
 
             void removeWeak() noexcept;
 
@@ -54,19 +45,11 @@ namespace aima::IntegratedRunner {
         private:
             ~ControlBlock() = default;
 
-            void notify( const core::Environment& ) noexcept override;
-
-            void notify( std::string_view ) override {}
-
-            void agentAdded( const core::Agent&, const core::Environment& ) override {}
-
-            void agentActed( const core::Agent&,
-                             const core::Percept&,
-                             const core::Action&,
-                             const core::Environment& ) override {}
+            void notify() noexcept override;
 
             void tryErase() noexcept;
 
+            std::mutex       mutex;
             InternalPtr      internalPtr;
             std::atomic_uint ptrCount          = 1;
             std::atomic_uint weakPtrCount      = 0;

@@ -60,6 +60,7 @@ add_library ( app_base
               views/GraphicViewer.hpp
               gui/OutputConsoleWidget.cpp
               gui/OutputConsoleWidget.hpp
+              core/EnvironmentDestroyedView.hpp
               )
 target_link_libraries ( app_base PRIVATE stb )
 target_link_libraries ( app_base PUBLIC imgui common )

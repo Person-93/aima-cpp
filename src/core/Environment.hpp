@@ -12,6 +12,7 @@
 #include "EnvironmentObject.hpp"
 #include "Agent.hpp"
 #include "EnvironmentView.hpp"
+#include "EnvironmentDestroyedView.hpp"
 
 namespace aima::core {
     class Action;
@@ -21,13 +22,16 @@ namespace aima::core {
     /** An environment in which agents can perceive and act */
     class Environment : public util::UniqueIdMixin<Environment, true> {
     public:
-        using Agents              = std::unordered_set<std::reference_wrapper<Agent>, typename Agent::hash>;
-        using EnvironmentObjects  = std::unordered_set<std::reference_wrapper<EnvironmentObject>,
-                                                       EnvironmentObject::hash>;
-        using PerformanceMeasures = std::unordered_map<std::reference_wrapper<const Agent>, util::ThreadSafeDouble,
-                                                       typename Agent::hash>;
-        using EnvironmentViews    = std::unordered_set<std::reference_wrapper<EnvironmentView>,
-                                                       typename EnvironmentView::hash>;
+        using Agents                    = std::unordered_set<std::reference_wrapper<Agent>, Agent::hash>;
+        using EnvironmentObjects        = std::unordered_set<std::reference_wrapper<EnvironmentObject>,
+                                                             EnvironmentObject::hash>;
+        using PerformanceMeasures       = std::unordered_map<std::reference_wrapper<const Agent>,
+                                                             util::ThreadSafeDouble,
+                                                             Agent::hash>;
+        using EnvironmentViews          = std::unordered_set<std::reference_wrapper<EnvironmentView>,
+                                                             EnvironmentView::hash>;
+        using EnvironmentDestroyedViews = std::unordered_set<std::reference_wrapper<EnvironmentDestroyedView>,
+                                                             EnvironmentDestroyedView::hash>;
 
         Environment();
 
@@ -160,6 +164,10 @@ namespace aima::core {
 
         virtual void addEnvironmentView( EnvironmentView&& view ) = delete;
 
+        virtual void addEnvironmentDestroyedView( EnvironmentDestroyedView& view ) { destroyedViews.insert( view ); }
+
+        virtual void addEnvironmentDestroyedView( EnvironmentDestroyedView&& view ) = delete;
+
         /**
          * Remove a view on the environment
          *
@@ -216,18 +224,20 @@ namespace aima::core {
          */
         void notifyEnvironmentViews( const Agent& agent, const Percept& percept, const Action& action );
 
-        unsigned stepCount             = 0;
+        unsigned stepCount                   = 0;
+
     private:
         void locklessStep();
 
         friend class StepGuard;
 
-        EnvironmentObjects  objects;
-        EnvironmentViews    views;
-        Agents              agents;
-        PerformanceMeasures performanceMeasures;
-        std::mutex          mutex;
-        std::atomic_bool    stepping   = false;
-        std::atomic_bool    shouldStop = false;
+        EnvironmentDestroyedViews destroyedViews;
+        EnvironmentObjects        objects;
+        EnvironmentViews          views;
+        Agents                    agents;
+        PerformanceMeasures       performanceMeasures;
+        std::mutex                mutex;
+        std::atomic_bool          stepping   = false;
+        std::atomic_bool          shouldStop = false;
     };
 }

@@ -15,38 +15,60 @@ void ControlBlock::removeWeak() noexcept {
     tryErase();
 }
 
-void ControlBlock::notify( const aima::core::Environment& ) noexcept {
+void ControlBlock::notify( ) noexcept {
     heldByEnvironment = false;
     tryErase();
 }
 
 void ControlBlock::tryErase() noexcept {
-    if ( heldByEnvironment || ptrCount ) return;
+    if ( ptrCount ) return;
+    std::unique_lock lock( mutex, std::try_to_lock );
+    if ( ptrCount ) return;
+
 
     if ( internalPtr ) {
+        // need to release the environment before the app can be disposed of
+        // can't dispose of the app right away because the environment might be busy
+        if ( heldByEnvironment ) {
+            lock.unlock();
+            auto& env = internalPtr->environment();
+            env->stop();
+            env = nullptr;
+            return;
+        }
+
         delete internalPtr;
         internalPtr = nullptr;
     }
+
     if ( !weakPtrCount ) delete this;
 }
 
 detail::ControlBlock::ControlBlock( ControlBlock::App* ptr ) : internalPtr( ptr ) {
-    ptr->environment().addEnvironmentView( *this );
+    ptr->environment()->addEnvironmentDestroyedView( *this );
+}
+
+void detail::ControlBlock::point() noexcept {
+    std::scoped_lock lock( mutex );
+    ++ptrCount;
+}
+
+void detail::ControlBlock::addWeak() noexcept {
+    std::scoped_lock lock( mutex );
+    ++weakPtrCount;
 }
 
 WeakAppPtr::WeakAppPtr( const AppPtr& ptr ) noexcept : pControlBlock( ptr.pControlBlock ) {
     if ( pControlBlock ) pControlBlock->addWeak();
 }
 
-AppPtr WeakAppPtr::lock() noexcept {
-    return AppPtr( *this );
-}
+AppPtr WeakAppPtr::lock() noexcept { return AppPtr( *this ); }
 
-const AppPtr WeakAppPtr::lock() const noexcept {
-    return AppPtr( *this );
-}
+const AppPtr WeakAppPtr::lock() const noexcept { return AppPtr( *this ); }
 
 WeakAppPtr& WeakAppPtr::operator=( const AppPtr& other ) noexcept {
+    if ( pControlBlock == other.pControlBlock ) return *this;
+
     if ( pControlBlock ) pControlBlock->removeWeak();
     pControlBlock = other.pControlBlock;
     if ( pControlBlock ) pControlBlock->addWeak();
@@ -54,6 +76,8 @@ WeakAppPtr& WeakAppPtr::operator=( const AppPtr& other ) noexcept {
 }
 
 WeakAppPtr& WeakAppPtr::operator=( AppPtr&& other ) noexcept {
+    if ( pControlBlock == other.pControlBlock ) return *this;
+
     if ( pControlBlock ) pControlBlock->removeWeak();
     pControlBlock = other.pControlBlock;
     if ( pControlBlock ) pControlBlock->addWeak();
@@ -62,6 +86,8 @@ WeakAppPtr& WeakAppPtr::operator=( AppPtr&& other ) noexcept {
 }
 
 WeakAppPtr& WeakAppPtr::operator=( const WeakAppPtr& other ) noexcept {
+    if ( pControlBlock == other.pControlBlock ) return *this;
+
     if ( pControlBlock ) pControlBlock->removeWeak();
     pControlBlock = other.pControlBlock;
     if ( pControlBlock ) pControlBlock->addWeak();
@@ -69,6 +95,8 @@ WeakAppPtr& WeakAppPtr::operator=( const WeakAppPtr& other ) noexcept {
 }
 
 WeakAppPtr& WeakAppPtr::operator=( WeakAppPtr&& other ) noexcept {
+    if ( pControlBlock == other.pControlBlock ) return *this;
+
     if ( pControlBlock ) pControlBlock->removeWeak();
     pControlBlock = other.pControlBlock;
     other.pControlBlock = nullptr;
@@ -118,6 +146,8 @@ AppPtr::AppPtr( WeakAppPtr&& weakAppPtr ) noexcept : pControlBlock( weakAppPtr.p
 }
 
 AppPtr& AppPtr::operator=( const AppPtr& other ) noexcept {
+    if ( pControlBlock == other.pControlBlock ) return *this;
+
     reset();
     if ( other.pControlBlock ) {
         pControlBlock = other.pControlBlock;
@@ -127,6 +157,8 @@ AppPtr& AppPtr::operator=( const AppPtr& other ) noexcept {
 }
 
 AppPtr& AppPtr::operator=( AppPtr&& other ) noexcept {
+    if ( pControlBlock == other.pControlBlock ) return *this;
+
     reset();
     pControlBlock = other.pControlBlock;
     other.pControlBlock = nullptr;
@@ -134,6 +166,8 @@ AppPtr& AppPtr::operator=( AppPtr&& other ) noexcept {
 }
 
 AppPtr& AppPtr::operator=( const WeakAppPtr& weakAppPtr ) noexcept {
+    if ( pControlBlock == weakAppPtr.pControlBlock ) return *this;
+
     reset();
     if ( weakAppPtr.pControlBlock && weakAppPtr.pControlBlock->isAlive()) {
         pControlBlock = weakAppPtr.pControlBlock;
@@ -143,6 +177,8 @@ AppPtr& AppPtr::operator=( const WeakAppPtr& weakAppPtr ) noexcept {
 }
 
 AppPtr& AppPtr::operator=( WeakAppPtr&& weakAppPtr ) noexcept {
+    if ( pControlBlock == weakAppPtr.pControlBlock ) return *this;
+
     reset();
     if ( weakAppPtr.pControlBlock && weakAppPtr.pControlBlock->isAlive()) {
         pControlBlock = weakAppPtr.pControlBlock;

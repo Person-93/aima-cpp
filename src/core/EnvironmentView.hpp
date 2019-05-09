@@ -35,11 +35,6 @@ namespace aima::core {
         virtual void notify( std::string_view message ) = 0;
 
         /**
-         * This method will be called from the environment's destructor
-         */
-        virtual void notify( const Environment& source ) noexcept {}
-
-        /**
          * This method will be called when an agent is added to the environment
          * @param agent The agent that was added
          * @param source The environment that the agent was added to

@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 #include <algorithm>
+#include "EnvironmentDestroyedView.hpp"
 #include "util/define_logger.hpp"
 #include "core/Percept.hpp" // IWYU pragma: keep
 
@@ -113,7 +114,7 @@ void Environment::notifyViews( std::string_view message ) {
 
 Environment::~Environment() {
     TRACE;
-    for ( EnvironmentView& view: views ) view.notify( *this );
+    for ( EnvironmentDestroyedView& view: destroyedViews ) view.notify();
 }
 
 void Environment::notifyEnvironmentViews( const Agent& agent ) {
