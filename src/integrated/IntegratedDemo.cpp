@@ -115,5 +115,5 @@ void aima::IntegratedRunner::IntegratedDemo::setStrId( string_view str_id ) {
 
 IntegratedDemo::~IntegratedDemo() {
     TRACE;
-    LOG4CPLUS_INFO( GetLogger(), "Demo " << str_id << " shutting down" );
+    LOG4CPLUS_INFO( GetLogger(), "Demo " << name << '-' << str_id << " shutting down" );
 }
