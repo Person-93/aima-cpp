@@ -72,8 +72,6 @@ namespace aima::viewer {
         bool render( gui::ImGuiWrapper& imGuiWrapper );
 
     protected:
-        virtual void initMethod( gui::ImGuiWrapper& imGuiWrapper ) {}
-
         /**
          * Constructs the viewer
          * @param assetLoader A function that loads all assets needed by the viewer
@@ -91,10 +89,13 @@ namespace aima::viewer {
          */
         ~GraphicViewer();
 
+
+    private:
+        virtual void initMethod( gui::ImGuiWrapper& imGuiWrapper ) {}
+
         virtual void renderDisplay( gui::ImGuiWrapper& imGuiWrapper,
                                     std::shared_ptr<core::Environment>& environment ) = 0;
 
-    private:
         void checkAsyncException();
 
         void renderConsoleArea( gui::ImGuiWrapper& imGuiWrapper,

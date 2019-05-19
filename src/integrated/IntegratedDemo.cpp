@@ -56,13 +56,9 @@ IntegratedDemo::IntegratedDemo( std::string_view name,
         str_id( str_id ),
         factory( std::move( factory )),
         imGuiWrapper_( imGuiWrapper ),
-        consoleWidget( gui::OutputConsoleWidget()),
+        consoleWidget( std::nullopt ),
         windowConfigs( makeConfig( name, &stayOpen_ )),
-        stayOpen_( true ) {
-    TRACE;
-
-    runDemo();
-}
+        stayOpen_( true ) { TRACE; }
 
 void IntegratedDemo::runDemo() {
     TRACE;
@@ -100,11 +96,14 @@ void IntegratedDemo::display( bool display ) {
     TRACE;
     if ( display == this->display() || isRunning()) return;
 
-    if ( display ) runDemo();
-    else consoleWidget = std::nullopt;
-
-    if ( !display )
+    if ( display ) {
+        runDemo();
+        LOG4CPLUS_INFO( GetLogger(), "Demo " << name << '-' << str_id << " shown" );
+    }
+    else {
+        consoleWidget = std::nullopt;
         LOG4CPLUS_INFO( GetLogger(), "Demo " << name << '-' << str_id << " hidden" );
+    }
 }
 
 void aima::IntegratedRunner::IntegratedDemo::setStrId( string_view str_id ) {
@@ -114,4 +113,7 @@ void aima::IntegratedRunner::IntegratedDemo::setStrId( string_view str_id ) {
     windowConfigs = makeConfig( name, &stayOpen_, str_id );
 }
 
-IntegratedDemo::~IntegratedDemo() = default;
+IntegratedDemo::~IntegratedDemo() {
+    TRACE;
+    LOG4CPLUS_INFO( GetLogger(), "Demo " << str_id << " shutting down" );
+}

@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <atomic>
-#include "core/AppPtr.hpp"
 #include "forward.hpp"
 
 namespace aima::gui { struct ImGuiWrapper; }
@@ -19,6 +18,8 @@ namespace aima::IntegratedRunner {
 
         IntegratedRunner( IntegratedRunner&& ) = delete;
 
+        ~IntegratedRunner();
+
         IntegratedRunner& operator=( const IntegratedRunner& ) = delete;
 
         IntegratedRunner& operator=( IntegratedRunner&& ) = delete;
@@ -28,10 +29,10 @@ namespace aima::IntegratedRunner {
          * @param imGuiWrapper
          * @param shouldRun
          */
-        void run( gui::ImGuiWrapper& imGuiWrapper, std::atomic_bool& shouldRun );
+        void run( gui::ImGuiWrapper& imGuiWrapper, const std::atomic_bool& shouldRun );
 
     private:
-        bool menuBar( gui::ImGuiWrapper& imGuiWrapper );
+        void menuBar( gui::ImGuiWrapper& imGuiWrapper );
 
         std::vector<AppPtr>            apps;
         std::vector<IntegratedDemoPtr> demos;

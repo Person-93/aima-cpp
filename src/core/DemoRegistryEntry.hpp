@@ -15,9 +15,9 @@ namespace aima::IntegratedRunner::detail {
 
         std::string_view name() const noexcept { return name_; }
 
-        IntegratedDemoPtr makeDemo( gui::ImGuiWrapper& imGuiWrapper );
+        IntegratedDemoPtr make( gui::ImGuiWrapper& imGuiWrapper );
 
-        const WeakIntegratedDemoPtr& demoPtr() const noexcept { return demo; }
+        const WeakIntegratedDemoPtr& ptr() const noexcept { return demo; }
 
         ~DemoRegistryEntry() = default;
 

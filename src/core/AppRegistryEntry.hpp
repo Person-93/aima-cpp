@@ -28,9 +28,9 @@ namespace aima::IntegratedRunner {
 
         std::string_view name() const noexcept { return name_; }
 
-        AppPtr makeApp( gui::ImGuiWrapper& imGuiWrapper );
+        AppPtr make( gui::ImGuiWrapper& imGuiWrapper );
 
-        const WeakAppPtr& appPtr() const noexcept { return weakAppPtr; }
+        const WeakAppPtr& ptr() const noexcept { return weakAppPtr; }
 
     private:
         WeakAppPtr             weakAppPtr;

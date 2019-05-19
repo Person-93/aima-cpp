@@ -156,11 +156,11 @@ void GraphicViewer::renderConsoleArea( ImGuiWrapper& imGuiWrapper, const std::sh
 
 void GraphicViewer::renderButtons( ImGuiWrapper& imGuiWrapper, const std::shared_ptr<Environment>& environment ) {
     TRACE;
-    if ( SmallButton( "Step" ))
-        thread( [ this ]( shared_ptr<Environment> env ) {
-            LOG_BUTTON_PRESS( "Step" );
+    if ( constexpr string_view buttonText = "Step"; SmallButton( buttonText.data()))
+        thread( [ this, buttonText ]( shared_ptr<Environment> env ) {
+            LOG_BUTTON_PRESS( buttonText.data());
             if ( env && !env->isRunning()) {
-                LOG_GUI_EVENT( "Stepping" );
+                LOG_BUTTON_PRESS( "Stepping" );
                 env->step();
             }
         }, environment )
@@ -267,6 +267,3 @@ std::thread GraphicViewer::thread( Function&& function, Args&& ... args ) {
                           forward<Function>( function ),
                           forward<Args>( args )... );
 }
-
-#undef LOG_BUTTON_PRESS
-#undef LOG_GUI_EVENT
