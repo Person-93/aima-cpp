@@ -5,8 +5,8 @@
 #include "AppRegistry.hpp"
 #include "gui/ImGuiWrapper.hpp"
 #include "core/App.hpp"
-#include "core/DemoRegistryEntry.hpp"
-#include "core/AppRegistryEntry.hpp"
+#include "DemoRegistryEntry.hpp"
+#include "AppRegistryEntry.hpp"
 #include "util/define_logger.hpp"
 
 using namespace aima::IntegratedRunner::detail;

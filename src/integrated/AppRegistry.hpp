@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/AppRegistryEntry.hpp>
+#include <integrated/AppRegistryEntry.hpp>
 #include "util/Container.hpp"
 
 

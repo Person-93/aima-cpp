@@ -1,14 +1,14 @@
 add_library ( vacuum_base
-              vacuum/BasicVacuumEnvironment.cpp
-              vacuum/BasicVacuumEnvironment.hpp
-              vacuum/BasicVacuumAgent.cpp
-              vacuum/BasicVacuumAgent.hpp
-              vacuum/StatefulVacuumAgent.cpp
-              vacuum/StatefulVacuumAgent.hpp
-              vacuum/LocalVacuumEnvironmentPercept.cpp
-              vacuum/LocalVacuumEnvironmentPercept.hpp
-              vacuum/misc.cpp
-              vacuum/misc.hpp
+              BasicVacuumEnvironment.cpp
+              BasicVacuumEnvironment.hpp
+              BasicVacuumAgent.cpp
+              BasicVacuumAgent.hpp
+              StatefulVacuumAgent.cpp
+              StatefulVacuumAgent.hpp
+              LocalVacuumEnvironmentPercept.cpp
+              LocalVacuumEnvironmentPercept.hpp
+              misc.cpp
+              misc.hpp
               )
 target_link_libraries ( vacuum_base PUBLIC common )
 
@@ -16,8 +16,8 @@ add_library ( vacuum_demo_base INTERFACE )
 target_link_libraries ( vacuum_demo_base INTERFACE vacuum_base demo_base )
 
 add_library ( vacuum_app_base
-              vacuum/VacuumGui.hpp
-              vacuum/VacuumGui.cpp
+              VacuumGui.hpp
+              VacuumGui.cpp
               )
 target_link_libraries ( vacuum_app_base PUBLIC app_base vacuum_base )
 
