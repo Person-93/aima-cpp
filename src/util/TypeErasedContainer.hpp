@@ -3,9 +3,9 @@
 #include <boost/container/stable_vector.hpp>
 #include "util/define_logger.hpp"
 #include "util/StringBuilder.hpp"
-#include "AssetManagerException.hpp"
+#include "util/asset_manager/AssetManagerException.hpp"
 
-namespace aima::util::AssetManager::detail {
+namespace aima::util::AssetManager {
     namespace type_erased_container {
         log4cplus::Logger& GetLogger();
     }

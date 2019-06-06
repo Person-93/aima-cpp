@@ -1,10 +1,10 @@
 #include "TypeErasedContainer.hpp"
 
-using aima::util::AssetManager::detail::TypeErasedContainer;
+using aima::util::AssetManager::TypeErasedContainer;
 
 DEFINE_LOGGER( TypeErasedContainer );
 
-log4cplus::Logger& aima::util::AssetManager::detail::type_erased_container::GetLogger() {
+log4cplus::Logger& aima::util::AssetManager::type_erased_container::GetLogger() {
     return ::GetLogger();
 }
 

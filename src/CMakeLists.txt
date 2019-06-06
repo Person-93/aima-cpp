@@ -39,9 +39,13 @@ target_compile_definitions ( imgui PUBLIC IMGUI_USER_CONFIG="${PROJECT_SOURCE_DI
 add_library ( asset_manager
               util/AssetManager.hpp
               util/AssetManager.cpp
-              util/asset_manager/TypeErasedContainer.hpp
-              util/asset_manager/TypeErasedContainer.cpp
+              util/TypeErasedContainer.hpp
+              util/TypeErasedContainer.cpp
               util/asset_manager/AssetManagerException.hpp
+              util/asset_manager/DataAccessLayer.hpp
+              util/asset_manager/DataAccessLayer.cpp
+              util/asset_manager/AssetHandle.hpp
+              util/asset_manager/AssetHandle.cpp
               )
 target_link_libraries ( asset_manager PRIVATE SQLite )
 target_link_libraries ( asset_manager PUBLIC common stdc++fs )
