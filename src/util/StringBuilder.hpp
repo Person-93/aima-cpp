@@ -92,7 +92,7 @@ namespace aima::util {
         explicit StringBuilder( String& string ) : string( &string ),
                                                    buffer( *( std::get<String*>( this->string ))),
                                                    ostream( &buffer ) {
-            string = "";
+            string.clear();
         }
 
         StringBuilder( const StringBuilder& ) = delete;
@@ -104,7 +104,7 @@ namespace aima::util {
         StringBuilder& operator=( StringBuilder&& ) noexcept( false ) = default;
 
         operator String()&& { // NOLINT(google-explicit-constructor)
-            return static_cast<StringBuilder&&>(*this).toString();
+            return std::move(*this).toString();
         }
 
         explicit operator String() const& {
