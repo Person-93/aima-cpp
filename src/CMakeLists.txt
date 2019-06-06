@@ -73,10 +73,5 @@ target_link_libraries ( app_base PRIVATE stb )
 target_link_libraries ( app_base PUBLIC imgui common )
 target_link_libraries ( app_base INTERFACE asset_manager )
 
-execute_process (
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ../assets ${CMAKE_CURRENT_BINARY_DIR}/assets
-)
-
-
 add_subdirectory ( vacuum )
 add_subdirectory ( integrated )
