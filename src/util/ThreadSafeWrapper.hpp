@@ -15,6 +15,11 @@ namespace aima::util {
     struct DirtyReadTag {};
     struct WriteTag {};
 
+    namespace detail {
+        template< typename T, typename ... Args >
+        using result_if_invocable = std::enable_if_t<std::is_invocable_v<T, Args...>, std::invoke_result_t<T, Args...>>;
+    }
+
     /**
      * This is a wrapper around an object that is meant to provide thread safe access while allowing
      * readers non-blocking access. It does this by maintaining two copies of the object.
@@ -156,38 +161,31 @@ namespace aima::util {
             } );
         }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "InfiniteRecursion"
-
         template< typename ... Args >
         auto operator()( Args&& ... args ) const ->
         std::enable_if_t<!std::is_same_v<CleanReadTag, first_entity<Args...>> &&
                          !std::is_same_v<DirtyReadTag, first_entity<Args...>> &&
-                         !std::is_same_v<WriteTag, first_entity<Args...>> &&
-                         std::is_invocable_v<const T&, Args...>,
-                         decltype( callType( std::forward( args )... ))> {
+                         !std::is_same_v<WriteTag, first_entity<Args...>>,
+                         detail::result_if_invocable<const T, Args...>> {
             return operator()( CleanReadTag{}, std::forward<Args>( args )... );
         }
 
-#pragma clang diagnostic pop
-
         template< typename ... Args >
-        auto operator()( CleanReadTag, Args&& ... args ) const ->
-        std::enable_if_t<std::is_invocable_v<const T&, Args...>, decltype( callType( std::forward<Args>( args )... ))> {
-            return sharedAccessClean( [ & ]( const T& t ) { t( std::forward<Args>( args )... ); } );
+        detail::result_if_invocable<const T, Args...>
+        operator()( CleanReadTag, Args&& ... args ) const {
+            return sharedAccessClean( [ & ]( const T& t ) { std::invoke( t, args... ); } );
         }
 
         template< typename ... Args >
-        auto operator()( DirtyReadTag, Args&& ... args ) const ->
-        std::enable_if_t<std::is_invocable_v<const T&, Args...>, decltype( callType( std::forward<Args>( args )... ))> {
-            return sharedAccessDirty( [ & ]( const T& t ) { t( std::forward<Args>( args )... ); } );
+        detail::result_if_invocable<const T, Args...>
+        operator()( DirtyReadTag, Args&& ... args ) const {
+            return sharedAccessDirty( [ & ]( const T& t ) { std::invoke( t, args... ); } );
         }
 
         template< typename ... Args >
-        auto operator()( WriteTag, Args&& ... args ) ->
-        std::enable_if_t<std::is_invocable_v<T&, Args...>,
-                         decltype( callTypeMutable( std::forward<Args>( args )... ))> {
-            return access( [ & ]( T& t ) { t( std::forward<Args>( args )... ); } );
+        detail::result_if_invocable<T, Args...>
+        operator()( WriteTag, Args&& ... args ) {
+            return access( [ & ]( T& t ) { std::invoke( t, args... ); } );
         }
 
         explicit operator T() const { return cleanRead(); }
@@ -259,18 +257,6 @@ namespace aima::util {
 #undef ASSIGNMENT_OPERATOR
 
     private:
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "NotImplementedFunctions"
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-
-        template< typename ... Args >
-        static auto callType( const T& t, Args&& ... args ) -> decltype( t( std::forward<Args>( args )... ));
-
-        template< typename ... Args >
-        static auto callTypeMutable( T& t, Args&& ... args ) -> decltype( t( std::forward<Args>( args )... ));
-
-#pragma clang diagnostic pop
-
         class LockHelper {
         public:
             LockHelper( std::shared_mutex& writtenTo, std::shared_mutex& heldOpen )
