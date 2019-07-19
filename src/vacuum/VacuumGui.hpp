@@ -13,7 +13,7 @@ namespace aima::vacuum {
     /**
      * A graphic viewer for displaying a vacuum environment
      */
-    class VacuumGui : public viewer::GraphicViewer {
+    class VacuumGui final : public viewer::GraphicViewer {
     public:
         explicit VacuumGui( std::string_view title, bool* open, std::string_view str_id = std::string_view{} );
 

@@ -19,7 +19,7 @@ namespace aima::viewer {
     /**
      * This method represents a simple viewer that prints all of its notifications to a <code>std::ostream</code>.
      */
-    class SimpleViewer : public core::EnvironmentView {
+    class SimpleViewer final : public core::EnvironmentView {
     public:
         /**
          * @param out The ostream to send messages to
