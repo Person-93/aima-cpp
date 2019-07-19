@@ -74,4 +74,5 @@ target_link_libraries ( app_base PUBLIC imgui common )
 target_link_libraries ( app_base INTERFACE asset_manager )
 
 add_subdirectory ( vacuum )
+add_subdirectory ( PathFinder )
 add_subdirectory ( integrated )
