@@ -4,6 +4,7 @@
 #include <string_view>
 #include <typeindex>
 #include <filesystem>
+#include <unordered_map>
 #include <boost/core/typeinfo.hpp>
 #include "define_logger.hpp"
 #include "StringBuilder.hpp"
