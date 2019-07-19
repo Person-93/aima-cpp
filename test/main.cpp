@@ -1,13 +1,14 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 #define BOOST_TEST_MODULE Tests
-#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_NO_MAIN
 #pragma clang diagnostic pop
 
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 #include <boost/test/unit_test_monitor.hpp>
 #include <boost/exception/diagnostic_information.hpp>
+#include <boost/test/unit_test_suite.hpp>
 #include "log4cplus/logger.h"
 #include "log4cplus/loglevel.h"
 
