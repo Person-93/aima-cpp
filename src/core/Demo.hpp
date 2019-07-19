@@ -44,11 +44,15 @@ namespace aima::core {
          */
         virtual void init() = 0;
 
+        virtual void runAtEnd() {}
+
         /**
          * This method should return the environment in which the demo is to be run
          * @return
          */
         virtual Environment& environment() noexcept = 0;
+
+        viewer::SimpleViewer& getViewer() { return viewer; }
 
     private:
         viewer::SimpleViewer viewer;

@@ -32,4 +32,6 @@ void Demo::run( std::shared_ptr<const util::CancellationToken> cancellationToken
         ss << "\t(Agent " << agentRef.get().id() << ": " << performance.dirtyRead() << ')';
     }
     viewer.notify( ss.str());
+
+    runAtEnd();
 }
