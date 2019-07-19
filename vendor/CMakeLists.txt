@@ -39,3 +39,8 @@ target_include_directories ( stb INTERFACE stb )
 add_library ( SQLite INTERFACE )
 target_include_directories ( SQLite INTERFACE sqlite_modern_cpp/hdr ${SQLITE3_INCLUDE_DIRS} )
 target_link_libraries ( SQLite INTERFACE ${SQLITE3_LIBRARIES} )
+
+set ( CMAKE_POLICY_DEFAULT_CMP0077 NEW )
+set ( LOG4CPLUS_BUILD_TESTING OFF )
+set ( WITH_UNIT_TESTS OFF )
+add_subdirectory ( log4cplus )

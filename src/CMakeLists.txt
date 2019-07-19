@@ -5,7 +5,7 @@ add_library ( logging
               util/configure_logging.cpp
               util/configure_logging.hpp
               )
-target_link_libraries ( logging PUBLIC Log4cplus )
+target_link_libraries ( logging PUBLIC log4cplus )
 target_compile_definitions ( logging PUBLIC APPLICATION_LOG_LEVEL=${LOG_LEVEL}_LOG_LEVEL )
 
 add_library ( version version.hpp ${version_file} )
