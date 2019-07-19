@@ -40,6 +40,22 @@ add_library ( SQLite INTERFACE )
 target_include_directories ( SQLite INTERFACE sqlite_modern_cpp/hdr ${SQLITE3_INCLUDE_DIRS} )
 target_link_libraries ( SQLite INTERFACE ${SQLITE3_LIBRARIES} )
 
+message ( STATUS "Building cppcoro" )
+set ( CPPCORO_SRC ${CMAKE_CURRENT_BINARY_DIR}/cppcoro )
+file ( COPY cppcoro DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
+execute_process ( COMMAND python2.7 ${CPPCORO_SRC}/tools/cake/src/run.py --clang-executable=${CMAKE_CXX_COMPILER} ${CPPCORO_SRC}/lib/build.cake
+                  RESULT_VARIABLE result
+                  OUTPUT_VARIABLE output
+                  ERROR_VARIABLE output
+                  )
+message ( "${output}" )
+if ( NOT result EQUAL 0 )
+    message ( FATAL_ERROR "Unable to build cppcoro" )
+endif ()
+add_library ( cppcoro INTERFACE )
+target_include_directories ( cppcoro INTERFACE cppcoro/include )
+target_link_libraries ( cppcoro INTERFACE ${CPPCORO_SRC}/build/linux_x64_clang8.0.1_debug/lib/libcppcoro.a )
+
 set ( CMAKE_POLICY_DEFAULT_CMP0077 NEW )
 set ( LOG4CPLUS_BUILD_TESTING OFF )
 set ( WITH_UNIT_TESTS OFF )

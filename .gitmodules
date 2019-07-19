@@ -7,6 +7,9 @@
 [submodule "vendor/sqlite_modern_cpp"]
 	path = vendor/sqlite_modern_cpp
 	url = https://github.com/SqliteModernCpp/sqlite_modern_cpp.git
+[submodule "vendor/cppcoro"]
+	path = vendor/cppcoro
+	url = https://github.com/lewissbaker/cppcoro.git
 [submodule "vendor/log4cplus"]
 	path = vendor/log4cplus
 	url = https://github.com/log4cplus/log4cplus.git

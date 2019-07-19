@@ -31,7 +31,9 @@ if ( AIMA_ENABLE_TESTING )
     set ( BOOST_MODULES unit_test_framework )
 endif ()
 
-find_package ( Log4cplus REQUIRED )
+add_compile_options ( --stdlib=libc++ -fcoroutines-ts )
+add_link_options ( --stdlib=libc++ -lc++abi )
+
 find_package ( Threads REQUIRED )
 find_package ( Boost REQUIRED ${BOOST_MODULES} )
 find_package ( OpenGL REQUIRED )
