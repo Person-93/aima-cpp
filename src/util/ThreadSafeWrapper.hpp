@@ -4,9 +4,10 @@
 #include <functional>
 #include <string>
 #include <string_view>
-#include <mutex>
 #include <utility>
 #include <type_traits>
+#include <chrono>
+#include <thread>
 #include <boost/type_traits/has_operator.hpp> // IWYU pragma: keep
 #include "util/type_traits.hpp"               // IWYU pragma: keep
 
@@ -46,7 +47,7 @@ namespace aima::util {
         ThreadSafeWrapper( const ThreadSafeWrapper& other ) : primary( other.cleanRead()), secondary( primary ) {}
 
         template< std::enable_if_t<std::is_move_constructible_v<T>, int> = 0 >
-        ThreadSafeWrapper( ThreadSafeWrapper&& other ) noexcept( false ) : // NOLINT(google-explicit-constructor)
+        ThreadSafeWrapper( ThreadSafeWrapper&& other ) noexcept : // NOLINT(google-explicit-constructor)
                 primary( other.moveRead()), secondary( primary ) {}
 
         template< typename ... Args >
@@ -59,6 +60,12 @@ namespace aima::util {
             // If the user's function doesn't throw, but there's an exception while syncing, we just let it bubble up.
 
             LockHelper lockForWritingToPrimary( primaryMutex, secondaryMutex );
+
+            while ( !lockForWritingToPrimary ) {
+                using namespace std::chrono_literals;
+                std::this_thread::sleep_for( 50ns );
+                lockForWritingToPrimary.lock();
+            }
 
             struct SyncHelper {
                 ~SyncHelper() noexcept( false ) {
@@ -261,8 +268,14 @@ namespace aima::util {
         public:
             LockHelper( std::shared_mutex& writtenTo, std::shared_mutex& heldOpen )
                     : writtenTo( writtenTo ), heldOpen( heldOpen ) {
+                lock();
+            }
+
+            bool lock() {
                 heldOpen.lock_shared();
-                writtenTo.lock();
+                locked = writtenTo.try_lock();
+                if ( !locked ) heldOpen.unlock_shared();
+                return locked;
             }
 
             void unlock() {
@@ -272,6 +285,8 @@ namespace aima::util {
             }
 
             ~LockHelper() { if ( locked ) unlock(); }
+
+            explicit operator bool() { return locked; }
 
         private:
             std::shared_mutex& writtenTo;
