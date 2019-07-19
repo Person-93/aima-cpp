@@ -32,31 +32,33 @@ void OutputConsoleBuffer::clear() {
 }
 
 OutputConsoleWidget::OutputConsoleWidget()
-        : outputPastDisplay( false ), buffer( outputPastDisplay, display ) {
+        : std::ostream{ new( &bufferStorage ) detail::OutputConsoleBuffer{ outputPastDisplay, display }},
+          outputPastDisplay( false ) {
     TRACE;
 
-    rdbuf( &buffer );
     display.access( []( std::string& string ) { string.reserve( 4096 ); } );
 }
 
-OutputConsoleWidget::OutputConsoleWidget( OutputConsoleWidget&& other ) noexcept( false ) :
+OutputConsoleWidget::OutputConsoleWidget( OutputConsoleWidget&& other ) noexcept :
         std::ostream( std::move( other )),
         display( std::move( other.display )),
-        outputPastDisplay( std::move( other.outputPastDisplay )),
-        buffer( std::move( other.buffer )) {
+        outputPastDisplay( std::move( other.outputPastDisplay )) {
     TRACE;
 
-    rdbuf( &buffer );
+    using detail::OutputConsoleBuffer;
+    new( &bufferStorage ) OutputConsoleBuffer{ std::move( other.buffer()) };
+    rdbuf( &buffer());
 }
 
-OutputConsoleWidget& OutputConsoleWidget::operator=( OutputConsoleWidget&& other ) noexcept( false ) {
+OutputConsoleWidget& OutputConsoleWidget::operator=( OutputConsoleWidget&& other ) noexcept {
     TRACE;
 
+    using detail::OutputConsoleBuffer;
     display           = std::move( other.display );
-    buffer            = std::move( other.buffer );
     outputPastDisplay = std::move( other.outputPastDisplay );
+    new( &bufferStorage ) OutputConsoleBuffer{ std::move( other.buffer()) };
     std::ostream::operator=( std::move( other ));
-    rdbuf( &buffer );
+    rdbuf( &buffer());
     return *this;
 }
 
@@ -64,7 +66,9 @@ bool OutputConsoleWidget::render( ImGuiWrapper& gui, ChildWindowConfig& config, 
     TRACE;
 
     return gui.childWindow( config, [ this, &scrollEnabled ]() {
-        ImGui::TextUnformatted( display.dirtyRead().c_str());
+        display.sharedAccessDirty( []( std::string_view text ) {
+            ImGui::TextUnformatted( text.begin(), text.end());
+        } );
         if ( outputPastDisplay.dirtyRead() && scrollEnabled ) {
             ImGui::SetScrollHereY( 1.0f );
             outputPastDisplay = false;
@@ -77,5 +81,5 @@ void OutputConsoleWidget::clear() {
 
     display           = "";
     outputPastDisplay = false;
-    buffer.clear();
+    buffer().clear();
 }

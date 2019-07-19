@@ -2,6 +2,7 @@
 
 #include <string>
 #include <sstream>
+#include <type_traits>
 #include "util/ThreadSafeWrapper.hpp"
 
 
@@ -38,17 +39,17 @@ namespace aima::gui {
      *
      * This class extends std::ostream, stream insertion can be used to display information in the widget.
      */
-    class OutputConsoleWidget : public std::ostream {
+    class OutputConsoleWidget final : public std::ostream {
     public:
         OutputConsoleWidget();
 
-        OutputConsoleWidget( OutputConsoleWidget& ) = delete;
+        OutputConsoleWidget( const OutputConsoleWidget& ) = delete;
 
-        OutputConsoleWidget( OutputConsoleWidget&& other ) noexcept( false );
+        OutputConsoleWidget( OutputConsoleWidget&& other ) noexcept;
 
-        OutputConsoleWidget& operator=( OutputConsoleWidget& ) = delete;
+        OutputConsoleWidget& operator=( const OutputConsoleWidget& ) = delete;
 
-        OutputConsoleWidget& operator=( OutputConsoleWidget&& other ) noexcept( false );
+        OutputConsoleWidget& operator=( OutputConsoleWidget&& ) noexcept;
 
         /**
          * Renders the console.
@@ -65,8 +66,13 @@ namespace aima::gui {
         void clear();
 
     private:
-        util::ThreadSafeString      display;
-        util::ThreadSafeBool        outputPastDisplay;
-        detail::OutputConsoleBuffer buffer;
+        detail::OutputConsoleBuffer& buffer() {
+            return *reinterpret_cast<detail::OutputConsoleBuffer*>(&bufferStorage);
+        }
+
+        util::ThreadSafeString                                         display;
+        util::ThreadSafeBool                                           outputPastDisplay;
+        std::aligned_storage_t<sizeof( detail::OutputConsoleBuffer ),
+                               alignof( detail::OutputConsoleBuffer )> bufferStorage;
     };
 }
