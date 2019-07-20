@@ -21,7 +21,7 @@ namespace aima::util {
             /** A function object that can be used for hashing in unordered maps and sets */
             struct hash {
                 std::size_t operator()( const T& t ) const noexcept {
-                    return std::hash<std::decay_t<typeof( unique_id_ )>>()( t.unique_id_ );
+                    return std::hash<std::decay_t<decltype( t.unique_id_ )>>()( t.unique_id_ );
                 }
             };
 

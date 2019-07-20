@@ -15,6 +15,9 @@ set ( version_file ${CMAKE_CURRENT_BINARY_DIR}/version.cpp )
 configure_file ( "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cpp.in" "${version_file}" @ONLY )
 
 set ( CMAKE_CXX_STANDARD 17 )
+set ( CMAKE_CXX_STANDARD_REQUIRED ON )
+set ( CMAKE_CXX_EXTENSIONS OFF )
+
 option ( AIMA_ENABLE_TESTING "Build the test cases" OFF )
 set ( LOG_LEVEL "DEBUG" CACHE STRING "Log level to use for Log4cplus" )
 if ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
