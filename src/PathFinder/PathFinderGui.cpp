@@ -1,4 +1,5 @@
 #include "PathFinderGui.hpp"
+#include <utility>
 #include "util/define_logger.hpp"
 #include "core/Exception.hpp"
 #include "PathFinderEnvironment.hpp"
@@ -11,7 +12,7 @@
 using namespace aima::core;
 using namespace aima::path_finder;
 
-DEFINE_LOGGER( PathFinderGui );
+DEFINE_LOGGER( PathFinderGui )
 
 namespace {
     PathFinderGui::AssetHandles assetLoader() { return {}; }
@@ -50,11 +51,30 @@ void PathFinderGui::renderDisplay( aima::gui::ImGuiWrapper& imGuiWrapper, std::s
                                           << Because( "Received unrecognized environment" ));
     }
 
+    renderInfo( *env, imGuiWrapper );
+    renderPathArea( *env, imGuiWrapper );
+}
+
+void PathFinderGui::renderInfo( const PathFinderEnvironment& env, gui::ImGuiWrapper& imGuiWrapper ) const {
+    bool isFirst = true;
+    for ( const core::Agent& agent: env.getAgents()) {
+        const auto& pathFinderAgent = dynamic_cast<const PathFinderAgent&>(agent);
+        const auto& status          = pathFinderAgent.getStatus();
+        ImGui::TextColored( ImColor{ 0, 100, 255 }, "%s:", util::parseTitle( agent ).data());
+        ImGui::Text( "  Nodes in memory:     %zu", status.nodesInMemory );
+        ImGui::Text( "  Max nodes in memory: %zu", status.maxNodesInMemory );
+        ImGui::Text( "  Nodes generated:     %zu", status.nodesGenerated );
+        ImGui::Text( "  Path length:         %.0f", status.pathLength );
+        ImGui::Text( "  Time spent thinking: %zu", status.timeSpent );
+    }
+}
+
+void PathFinderGui::renderPathArea( const PathFinderEnvironment& env, gui::ImGuiWrapper& imGuiWrapper ) {
     imGuiWrapper.childWindow( childWindowConfig, [ & ]() {
-        renderObstacles( *env );
-        renderAgents( *env );
-        renderGoal( *env );
-        renderPlans( *env );
+        renderObstacles( env );
+        renderAgents( env );
+        renderGoal( env );
+        renderPlans( env );
     } );
 }
 

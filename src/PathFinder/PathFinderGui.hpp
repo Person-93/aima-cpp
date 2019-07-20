@@ -20,6 +20,10 @@ namespace aima::path_finder {
 
         void renderDisplay( gui::ImGuiWrapper& imGuiWrapper, std::shared_ptr<core::Environment>& environment ) override;
 
+        void renderInfo( const PathFinderEnvironment& env, gui::ImGuiWrapper& imGuiWrapper ) const;
+
+        void renderPathArea( const aima::path_finder::PathFinderEnvironment& env, gui::ImGuiWrapper& imGuiWrapper );
+
         void renderObstacles( const PathFinderEnvironment& env ) const;
 
         void renderAgents( const PathFinderEnvironment& env ) const;

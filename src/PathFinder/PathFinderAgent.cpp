@@ -1,4 +1,5 @@
 #include "PathFinderAgent.hpp"
+#include <utility>
 #include "Point.hpp"
 #include "util/define_logger.hpp"
 #include "core/Exception.hpp"
@@ -32,6 +33,12 @@ const Action& PathFinderAgent::execute( const Percept& percept ) {
         AIMA_THROW_EXCEPTION( Exception{} << Because{ "Search already completed" } );
     }
 
+    status.access( [ this ]( AgentStatus& status ) {
+        ++status.timeSpent;
+        const auto& plan = getPlan();
+        status.pathLength = plan ? getPlan()->pathCost : 0;
+    } );
+
     switch ( *iterator ) {
         case SearchResults::BUSY: return PathFinderEnvironment::PLANNING;
         case SearchResults::SUCCESS: return PathFinderEnvironment::SUCCEEDED;
@@ -61,4 +68,19 @@ std::vector<Point> PathFinderAgent::triviallyReachablePoints( const Point& curre
     if ( isTriviallyReachable( currentLocation, goal, obstacles ))
         points.push_back( goal );
     return points;
+}
+
+std::shared_ptr<SearchNode> PathFinderAgent::makeNode( std::weak_ptr<SearchNode> parent, Point location, float cost ) {
+    status.access( []( AgentStatus& status ) {
+        ++status.nodesInMemory;
+        status.maxNodesInMemory = std::max( status.maxNodesInMemory, status.nodesInMemory );
+        ++status.nodesGenerated;
+    } );
+    return std::shared_ptr<SearchNode>{ new SearchNode{ std::move( parent ), location, cost },
+                                        [ this ]( SearchNode* p ) {
+                                            status.access( []( AgentStatus& status ) {
+                                                --status.nodesInMemory;
+                                            } );
+                                            delete p;
+                                        }};
 }

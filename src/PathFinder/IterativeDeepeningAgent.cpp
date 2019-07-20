@@ -8,7 +8,7 @@
 
 using namespace aima::path_finder;
 
-DEFINE_LOGGER( IterativeDeepeningAgent );
+DEFINE_LOGGER( IterativeDeepeningAgent )
 
 std::unique_ptr<aima::core::Agent> IterativeDeepeningAgent::clone() const {
     return std::unique_ptr<aima::core::Agent>( new IterativeDeepeningAgent{ *this } );
@@ -18,7 +18,7 @@ PathFinderAgent::Generator IterativeDeepeningAgent::search( Point currentLocatio
                                                             Point goal,
                                                             const PathFinderEnvironment::Obstacles& obstacles ) {
     return iterativeDeepeningSearch(
-            std::make_shared<SearchNode>( SearchNode{{}, currentLocation, 0 } ),
+            makeNode( {}, currentLocation, 0 ),
             goal,
             obstacles );
 }
@@ -75,26 +75,14 @@ IterativeDeepeningAgent::depthLimitedSearch( const std::shared_ptr<SearchNode>& 
 
     co_yield SearchResults::BUSY;
 
-    bool cutoffOccurred = false;
     for ( const auto& point: reachablePoints ) {
-        auto child = node->addChild(
-                new SearchNode{ node, point, node->pathCost + distance( node->location, point ) } );
+        auto& child = node->addChild( makeNode( node, point, node->pathCost + distance( node->location, point )));
         plan = child;
 
-        auto search = depthLimitedSearch( child, goal, obstacles, limit - 1 );
-
-        for ( auto result : search ) {
-            cutoffOccurred = result == SearchResults::FAIL;
-            co_yield result;
-        }
+        co_yield depthLimitedSearch( child, goal, obstacles, limit - 1 );
+        node->children = {};
     }
 
-    if ( cutoffOccurred ) {
-        plan.reset();
-        co_yield SearchResults::FAIL;
-        co_return;
-    }
-
-    plan = getPlan()->parent;
+    plan = node;
     co_yield SearchResults::FAIL;
 }
