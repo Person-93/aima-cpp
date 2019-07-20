@@ -22,6 +22,7 @@ add_library ( common
               util/random_string.cpp
               util/random_string.hpp
               util/Container.hpp
+              util/parseTitle.cpp
               util/parseTitle.hpp
               util/StringBuilder.hpp
               util/type_traits.hpp
