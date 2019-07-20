@@ -5,8 +5,11 @@
 #include "geometry.hpp"
 #include "util/define_logger.hpp"
 #include "core/Exception.hpp"
+#include "core/registerAgent.hpp"
 
 using namespace aima::path_finder;
+
+AIMA_REGISTER_AGENT( PathFinderAgent, IterativeDeepeningAgent );
 
 DEFINE_LOGGER( IterativeDeepeningAgent )
 

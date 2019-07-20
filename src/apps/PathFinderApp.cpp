@@ -9,11 +9,10 @@ PathFinderApp::PathFinderApp( aima::gui::ImGuiWrapper& imGuiWrapper ) :
         App{ imGuiWrapper },
         gui{ util::parseTitle<PathFinderApp>(), &stayOpen_ },
         env{ std::make_shared<PathFinderEnvironment>() },
-        agent{} {
+        agentPicker{ *env, &stayOpen_ } {
     viewer().setEnvironment( env );
-    env->addAgent( agent );
 }
 
 void aima::apps::PathFinderApp::renderImpl() {
-    gui.render( imGuiWrapper());
+    agentPicker.done() ? gui.render( imGuiWrapper()) : agentPicker.render( imGuiWrapper());
 }
