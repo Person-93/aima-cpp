@@ -69,6 +69,9 @@ add_library ( app_base
               gui/OutputConsoleWidget.cpp
               gui/OutputConsoleWidget.hpp
               core/EnvironmentDestroyedView.hpp
+              core/registerAgent.hpp
+              core/AgentPicker.cpp
+              core/AgentPicker.hpp
               )
 target_link_libraries ( app_base PRIVATE stb )
 target_link_libraries ( app_base PUBLIC imgui common )
