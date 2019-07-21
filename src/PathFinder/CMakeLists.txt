@@ -16,6 +16,8 @@ add_library ( path_finder_base
               SearchNode.hpp
               IterativeDeepeningAgent.cpp
               IterativeDeepeningAgent.hpp
+              AStarAgent.cpp
+              AStarAgent.hpp
               )
 target_link_libraries ( path_finder_base PUBLIC common cppcoro )
 
