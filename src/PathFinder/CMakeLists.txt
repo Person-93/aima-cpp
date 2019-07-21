@@ -18,6 +18,9 @@ add_library ( path_finder_base
               IterativeDeepeningAgent.hpp
               AStarAgent.cpp
               AStarAgent.hpp
+              CollapsibleSearchNode.hpp
+              RecursiveBestFirstAgent.cpp
+              RecursiveBestFirstAgent.hpp
               )
 target_link_libraries ( path_finder_base PUBLIC common cppcoro )
 
