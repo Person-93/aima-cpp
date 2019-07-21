@@ -38,12 +38,41 @@ namespace aima::path_finder {
     protected:
         PathFinderAgent( const PathFinderAgent& other ) : Agent{ *this } {}
 
+        /**
+         * Returns all of the points that can be reached without having to navigate around obstacles
+         * @param currentLocation
+         * @param obstacles
+         * @param goal
+         * @return
+         */
         static std::vector<Point>
         triviallyReachablePoints( const Point& currentLocation,
                                   const PathFinderEnvironment::Obstacles& obstacles,
                                   const Point& goal );
 
-        std::shared_ptr<SearchNode> makeNode( std::weak_ptr<SearchNode> parent, Point location, float cost );
+        /**
+         * Creates a search node and updates the status to reflect the new search node count
+         * @tparam SearchNode
+         * @param parent
+         * @param location
+         * @param cost
+         * @return
+         */
+        template <typename SearchNode>
+        std::shared_ptr<SearchNode> makeNode( std::weak_ptr<SearchNode> parent, Point location, float cost ) {
+            status.access( []( AgentStatus& status ) {
+                ++status.nodesInMemory;
+                status.maxNodesInMemory = std::max( status.maxNodesInMemory, status.nodesInMemory );
+                ++status.nodesGenerated;
+            } );
+            return std::shared_ptr<SearchNode>{ new SearchNode{ std::move( parent ), location, cost },
+                                                [ this ]( SearchNode* p ) {
+                                                    status.access( []( AgentStatus& status ) {
+                                                        --status.nodesInMemory;
+                                                    } );
+                                                    delete p;
+                                                }};
+        }
 
         enum class SearchResults {
             SUCCESS, BUSY, FAIL

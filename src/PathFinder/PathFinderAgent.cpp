@@ -72,18 +72,3 @@ std::vector<Point> PathFinderAgent::triviallyReachablePoints( const Point& curre
         points.push_back( goal );
     return points;
 }
-
-std::shared_ptr<SearchNode> PathFinderAgent::makeNode( std::weak_ptr<SearchNode> parent, Point location, float cost ) {
-    status.access( []( AgentStatus& status ) {
-        ++status.nodesInMemory;
-        status.maxNodesInMemory = std::max( status.maxNodesInMemory, status.nodesInMemory );
-        ++status.nodesGenerated;
-    } );
-    return std::shared_ptr<SearchNode>{ new SearchNode{ std::move( parent ), location, cost },
-                                        [ this ]( SearchNode* p ) {
-                                            status.access( []( AgentStatus& status ) {
-                                                --status.nodesInMemory;
-                                            } );
-                                            delete p;
-                                        }};
-}

@@ -25,7 +25,7 @@ namespace {
 AStarAgent::Generator AStarAgent::search( Point currentLocation,
                                           Point goal,
                                           const PathFinderEnvironment::Obstacles& obstacles ) {
-    auto rootNode = makeNode( {}, currentLocation, 0 );
+    auto rootNode = makeNode<SearchNode>( {}, currentLocation, 0 );
     plan = rootNode;
 
     while ( plan->location != goal ) {
@@ -39,7 +39,7 @@ AStarAgent::Generator AStarAgent::search( Point currentLocation,
             for ( const auto& point: points ) {
                 if ( auto parent = plan->parent.lock(); parent && point == parent->location ) continue;
                 ss << point << ", ";
-                plan->addChild( makeNode( plan, point, plan->pathCost + distance( plan->location, point )));
+                plan->addChild( makeNode<SearchNode>( plan, point, plan->pathCost + distance( plan->location, point )));
             }
             LOG4CPLUS_DEBUG( GetLogger(), ss.str());
         }

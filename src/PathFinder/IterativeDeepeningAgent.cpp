@@ -21,7 +21,7 @@ PathFinderAgent::Generator IterativeDeepeningAgent::search( Point currentLocatio
                                                             Point goal,
                                                             const PathFinderEnvironment::Obstacles& obstacles ) {
     return iterativeDeepeningSearch(
-            makeNode( {}, currentLocation, 0 ),
+            makeNode<SearchNode>( {}, currentLocation, 0 ),
             goal,
             obstacles );
 }
@@ -79,7 +79,8 @@ IterativeDeepeningAgent::depthLimitedSearch( const std::shared_ptr<SearchNode>& 
     co_yield SearchResults::BUSY;
 
     for ( const auto& point: reachablePoints ) {
-        auto& child = node->addChild( makeNode( node, point, node->pathCost + distance( node->location, point )));
+        auto& child = node->addChild(
+                makeNode<SearchNode>( node, point, node->pathCost + distance( node->location, point )));
         plan = child;
 
         co_yield depthLimitedSearch( child, goal, obstacles, limit - 1 );
