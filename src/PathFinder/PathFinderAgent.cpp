@@ -41,8 +41,11 @@ const Action& PathFinderAgent::execute( const Percept& percept ) {
 
     switch ( *iterator ) {
         case SearchResults::BUSY: return PathFinderEnvironment::PLANNING;
-        case SearchResults::SUCCESS: return PathFinderEnvironment::SUCCEEDED;
         case SearchResults::FAIL: return PathFinderEnvironment::FAILED;
+        case SearchResults::SUCCESS: {
+            isAlive( false );
+            return PathFinderEnvironment::SUCCEEDED;
+        }
     }
 }
 
