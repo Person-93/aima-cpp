@@ -2,7 +2,6 @@
 #include <utility>
 #include "util/define_logger.hpp"
 #include "core/Exception.hpp"
-#include "PathFinderEnvironment.hpp"
 #include "util/parseTitle.hpp"
 #include "util/AssetManager.hpp"
 #include "util/random_string.hpp"
@@ -16,6 +15,17 @@ DEFINE_LOGGER( PathFinderGui )
 
 namespace {
     PathFinderGui::AssetHandles assetLoader() { return {}; }
+
+    const ImColor& color() {
+        static std::array<ImColor, 3> colors{
+                ImColor{ ImVec4{ 0, 100, 255, .5 }},
+                ImColor{ ImVec4{ 255, 0, 100, .5 }},
+                ImColor{ ImVec4{ 100, 255, 0, .5 }},
+        };
+        static size_t                 colorsIndex{};
+        if ( colorsIndex >= colors.size()) colorsIndex = 0;
+        return colors[ colorsIndex++ ];
+    }
 }
 
 PathFinderGui::PathFinderGui( std::string_view title, bool* open, std::string_view str_id ) :
@@ -38,6 +48,10 @@ void PathFinderGui::setEnvironment( const std::shared_ptr<Environment>& environm
     GraphicViewer::setEnvironment( environment );
 }
 
+void PathFinderGui::agentAdded( const aima::core::Agent& agent, const aima::core::Environment& source ) {
+    agentColors.insert( { agent, color() } );
+}
+
 void PathFinderGui::renderDisplay( aima::gui::ImGuiWrapper& imGuiWrapper, std::shared_ptr<Environment>& environment ) {
     if ( !environment ) {
         ImGui::Text( "The environment has not been set" );
@@ -56,11 +70,10 @@ void PathFinderGui::renderDisplay( aima::gui::ImGuiWrapper& imGuiWrapper, std::s
 }
 
 void PathFinderGui::renderInfo( const PathFinderEnvironment& env, gui::ImGuiWrapper& imGuiWrapper ) const {
-    bool isFirst = true;
     for ( const core::Agent& agent: env.getAgents()) {
         const auto& pathFinderAgent = dynamic_cast<const PathFinderAgent&>(agent);
         const auto& status          = pathFinderAgent.getStatus();
-        ImGui::TextColored( ImColor{ 0, 100, 255 }, "%s:", util::parseTitle( agent ).data());
+        ImGui::TextColored( agentColors.at( agent ), "%s:", util::parseTitle( agent ).data());
         ImGui::Text( "  Nodes in memory:     %zu", status.nodesInMemory );
         ImGui::Text( "  Max nodes in memory: %zu", status.maxNodesInMemory );
         ImGui::Text( "  Nodes generated:     %zu", status.nodesGenerated );
@@ -79,7 +92,7 @@ void PathFinderGui::renderPathArea( const PathFinderEnvironment& env, gui::ImGui
 }
 
 void PathFinderGui::renderObstacles( const PathFinderEnvironment& env ) const {
-    static const ImU32 color    = ImColor{ ImVec4{ 1.0f, 1.0f, 0.4f, 1.0f }};
+    static const ImU32 color    = ImColor{ ImVec4{ 0.4f, 0.4f, 0.4f, 1.0f }};
     const ImVec2       position = ImGui::GetCursorScreenPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
@@ -99,7 +112,7 @@ void PathFinderGui::renderAgents( const PathFinderEnvironment& env ) const {
     const ImVec2       position = ImGui::GetCursorScreenPos();
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
     for ( const auto&[agent, location] : env.getAgentLocations()) {
-        draw_list->AddCircleFilled( ImVec2{ location.x + position.x, location.y + position.y }, 3, color );
+        draw_list->AddCircleFilled( ImVec2{ location.x + position.x, location.y + position.y }, 5, color );
     }
 }
 
@@ -108,11 +121,10 @@ void PathFinderGui::renderGoal( const PathFinderEnvironment& env ) const {
     const ImVec2       position = ImGui::GetCursorScreenPos();
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
     const auto& goal      = env.getGoal();
-    draw_list->AddCircleFilled( ImVec2{ goal.x + position.x, goal.y + position.y }, 3, color );
+    draw_list->AddCircleFilled( ImVec2{ goal.x + position.x, goal.y + position.y }, 5, color );
 }
 
 void PathFinderGui::renderPlans( const PathFinderEnvironment& env ) const {
-    static const ImU32 color     = ImColor{ ImVec4{ 0.2f, 0.0f, 1.0f, 1.0f }};
     static const float thickness = 2.5;
     const ImVec2       position  = ImGui::GetCursorScreenPos();
     ImDrawList       * drawList = ImGui::GetWindowDrawList();
@@ -127,6 +139,7 @@ void PathFinderGui::renderPlans( const PathFinderEnvironment& env ) const {
         auto previous = p->getPlan();
         if ( !previous ) continue;
 
+        const auto& color = agentColors.at( agent );
         for ( auto current = previous->parent.lock();
               current;
               previous = current, current = current->parent.lock()) {

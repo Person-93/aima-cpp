@@ -2,18 +2,18 @@
 
 #include "views/GraphicViewer.hpp"
 #include <string_view>
+#include <unordered_map>
+#include "PathFinderEnvironment.hpp"
 #include "Point.hpp"
 
 namespace aima::path_finder {
-    class PathFinderEnvironment;
-
-    struct Triangle { Point a, b, c; };
-
     class PathFinderGui final : public viewer::GraphicViewer {
     public:
         PathFinderGui( std::string_view title, bool* open, std::string_view str_id = {} );
 
         void setEnvironment( const std::shared_ptr<core::Environment>& environment ) override;
+
+        void agentAdded( const core::Agent& agent, const core::Environment& source ) override;
 
     private:
         void initMethod( gui::ImGuiWrapper& imGuiWrapper ) override {}
@@ -32,6 +32,7 @@ namespace aima::path_finder {
 
         void renderPlans( const PathFinderEnvironment& env ) const;
 
-        gui::ChildWindowConfig childWindowConfig;
+        gui::ChildWindowConfig                                                          childWindowConfig;
+        std::unordered_map<PathFinderEnvironment::AgentRef, ImColor, core::Agent::hash> agentColors;
     };
 }
