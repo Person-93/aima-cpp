@@ -29,7 +29,7 @@ namespace aima::path_finder {
     public:
         PathFinderAgent() = default;
 
-        const core::Action& execute( const core::Percept& percept ) override;
+        std::unique_ptr<core::Action> execute( const core::Percept& percept ) override;
 
         virtual std::shared_ptr<const SearchNode> getPlan() const = 0;
 

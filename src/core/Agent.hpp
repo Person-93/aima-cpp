@@ -23,7 +23,7 @@ namespace aima::core {
 
         virtual std::unique_ptr<Agent> clone() const = 0;
 
-        virtual const Action& execute( const Percept& percept ) = 0;
+        virtual std::unique_ptr<Action> execute( const Percept& percept ) = 0;
 
         virtual bool isAlive() const { return alive; }
 

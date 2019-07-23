@@ -14,7 +14,7 @@ using namespace aima::core;
 using namespace aima::vacuum;
 using std::out_of_range;
 
-DEFINE_LOGGER( StatefulVacuumAgent );
+DEFINE_LOGGER( StatefulVacuumAgent )
 
 std::unique_ptr<Agent> StatefulVacuumAgent::clone() const {
     TRACE;
@@ -34,7 +34,7 @@ StatefulVacuumAgent::StatefulVacuumAgent( unsigned long x, unsigned long y ) : s
 StatefulVacuumAgent::StatefulVacuumAgent( const BasicVacuumEnvironment& environment ) :
         StatefulVacuumAgent( environment.getX(), environment.getY()) { TRACE; }
 
-const Action& StatefulVacuumAgent::execute( const Percept& percept ) {
+std::unique_ptr<Action> StatefulVacuumAgent::execute( const Percept& percept ) {
     TRACE;
 
     auto p = dynamic_cast<const LocalVacuumEnvironmentPercept*>(&percept);
@@ -47,10 +47,10 @@ const Action& StatefulVacuumAgent::execute( const Percept& percept ) {
     auto location = p->agentLocation;
     state( location.x, location.y ) = true;
 
-    if ( p->agentLocationState == LocationState::DIRTY ) return BasicVacuumEnvironment::ACTION_SUCK;
+    if ( p->agentLocationState == LocationState::DIRTY ) return BasicVacuumEnvironment::ACTION_SUCK.clone();
     if ( allClean()) return Action::noOp();
-    if ( location == Location{ 0, 0 } ) return BasicVacuumEnvironment::ACTION_MOVE_RIGHT;
-    if ( location == Location{ 1, 0 } ) return BasicVacuumEnvironment::ACTION_MOVE_LEFT;
+    if ( location == Location{ 0, 0 } ) return BasicVacuumEnvironment::ACTION_MOVE_RIGHT.clone();
+    if ( location == Location{ 1, 0 } ) return BasicVacuumEnvironment::ACTION_MOVE_LEFT.clone();
 
     using namespace aima::core::exception;
     AIMA_THROW_EXCEPTION( Exception{} << Because( "Agent received unrecognized percept" )

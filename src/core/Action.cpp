@@ -8,7 +8,7 @@ using aima::core::Action;
 DEFINE_LOGGER( Action );
 
 namespace {
-    const string_view noOpName = "NoOp";
+    const string_view noOpName = "NoOp"; // NOLINT(cert-err58-cpp)
 }
 
 bool Action::isNoOp() const {
@@ -17,9 +17,8 @@ bool Action::isNoOp() const {
 
 Action::Action( string_view name ) noexcept : name( name ) { TRACE; }
 
-const Action& Action::noOp() noexcept {
-    static Action action( noOpName );
-    return action;
+std::unique_ptr<Action> Action::noOp() noexcept {
+    return std::make_unique<Action>( noOpName );
 }
 
 void Action::print( std::ostream& out ) const {

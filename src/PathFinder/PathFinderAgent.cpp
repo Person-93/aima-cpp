@@ -3,6 +3,7 @@
 #include "Point.hpp"
 #include "util/define_logger.hpp"
 #include "core/Exception.hpp"
+#include "core/Action.hpp"
 #include "PathFinderPercept.hpp"
 #include "SearchNode.hpp"
 #include "geometry.hpp"
@@ -12,7 +13,7 @@ using namespace aima::path_finder;
 
 DEFINE_LOGGER( PathFinderAgent )
 
-const Action& PathFinderAgent::execute( const Percept& percept ) {
+std::unique_ptr<Action> PathFinderAgent::execute( const Percept& percept ) {
     auto p = dynamic_cast<const PathFinderPercept*>(&percept);
     if ( !p ) {
         using namespace aima::core::exception;
@@ -40,11 +41,11 @@ const Action& PathFinderAgent::execute( const Percept& percept ) {
     } );
 
     switch ( *iterator ) {
-        case SearchResults::BUSY: return PathFinderEnvironment::PLANNING;
-        case SearchResults::FAIL: return PathFinderEnvironment::FAILED;
+        case SearchResults::BUSY: return PathFinderEnvironment::PLANNING.clone();
+        case SearchResults::FAIL: return PathFinderEnvironment::FAILED.clone();
         case SearchResults::SUCCESS: {
             isAlive( false );
-            return PathFinderEnvironment::SUCCEEDED;
+            return PathFinderEnvironment::SUCCEEDED.clone();
         }
     }
 }

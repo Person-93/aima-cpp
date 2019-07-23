@@ -6,6 +6,7 @@
 #include "EnvironmentDestroyedView.hpp"
 #include "util/define_logger.hpp"
 #include "core/Percept.hpp" // IWYU pragma: keep
+#include "Action.hpp"
 
 
 using namespace aima::core;
@@ -135,9 +136,9 @@ void Environment::locklessStep() {
     for ( Agent& agent: agents ) {
         if ( agent.isAlive()) {
             const auto percept = getPerceptSeenBy( agent );
-            const auto& action = agent.execute( *percept );
-            executeAction( agent, action );
-            notifyEnvironmentViews( agent, *percept, action );
+            const auto action  = agent.execute( *percept );
+            executeAction( agent, *action );
+            notifyEnvironmentViews( agent, *percept, *action );
         }
     }
     createExogenousChange();

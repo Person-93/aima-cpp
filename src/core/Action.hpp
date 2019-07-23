@@ -34,7 +34,7 @@ namespace aima::core {
          * An action object that represents not performing an action
          * @return
          */
-        static const Action& noOp() noexcept;
+        static std::unique_ptr<Action> noOp() noexcept;
 
         friend bool operator==( const Action& a, const Action& b ) {
             return a.getName() == b.getName();

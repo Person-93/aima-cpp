@@ -26,7 +26,7 @@ namespace aima::vacuum {
 
         std::unique_ptr<Agent> clone() const override;
 
-        const core::Action& execute( const core::Percept& percept ) override;
+        std::unique_ptr<core::Action> execute( const core::Percept& percept ) override;
 
     protected:
         StatefulVacuumAgent( const StatefulVacuumAgent& ) = default;
