@@ -83,15 +83,20 @@ void PathFinderGui::renderInfo( const PathFinderEnvironment& env, gui::ImGuiWrap
 }
 
 void PathFinderGui::renderPathArea( const PathFinderEnvironment& env, gui::ImGuiWrapper& imGuiWrapper ) {
+    auto  region       = ImGui::GetContentRegionAvail();
+    float xScaleFactor = region.x / 800;
+    float yScaleFactor = region.y / 350;
+    float scaleFactor  = std::min( xScaleFactor, yScaleFactor );
+    childWindowConfig.size = { 800 * scaleFactor, 350 * scaleFactor };
     imGuiWrapper.childWindow( childWindowConfig, [ & ]() {
-        renderObstacles( env );
-        renderAgents( env );
-        renderGoal( env );
-        renderPlans( env );
+        renderObstacles( env, scaleFactor );
+        renderAgents( env, scaleFactor );
+        renderGoal( env, scaleFactor );
+        renderPlans( env, scaleFactor );
     } );
 }
 
-void PathFinderGui::renderObstacles( const PathFinderEnvironment& env ) const {
+void PathFinderGui::renderObstacles( const PathFinderEnvironment& env, float scaleFactor ) const {
     static const ImU32 color    = ImColor{ ImVec4{ 0.4f, 0.4f, 0.4f, 1.0f }};
     const ImVec2       position = ImGui::GetCursorScreenPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -99,34 +104,41 @@ void PathFinderGui::renderObstacles( const PathFinderEnvironment& env ) const {
     std::vector<ImVec2> vertices;
     for ( const auto& obstacle : env.getObstacles()) {
         std::transform( obstacle.getPoints().begin(), obstacle.getPoints().end(), std::back_inserter( vertices ),
-                        [ &position ]( const util::geometry::Point& point ) {
-                            return ImVec2{ point.x + position.x, point.y + position.y };
+                        [ & ]( const util::geometry::Point& point ) {
+                            return ImVec2{ point.x * scaleFactor + position.x,
+                                           point.y * scaleFactor + position.y };
                         } );
         drawList->AddConvexPolyFilled( vertices.data(), static_cast<const int>(vertices.size()), color );
         vertices.clear();
     }
 }
 
-void PathFinderGui::renderAgents( const PathFinderEnvironment& env ) const {
+void PathFinderGui::renderAgents( const PathFinderEnvironment& env, float scaleFactor ) const {
     static const ImU32 color    = ImColor{ ImVec4{ 0.0f, 1.0f, 0.2f, 1.0f }};
     const ImVec2       position = ImGui::GetCursorScreenPos();
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
     for ( const auto&[agent, location] : env.getAgentLocations()) {
-        draw_list->AddCircleFilled( ImVec2{ location.x + position.x, location.y + position.y }, 5, color );
+        draw_list->AddCircleFilled( ImVec2{ location.x * scaleFactor + position.x,
+                                            location.y * scaleFactor + position.y },
+                                    5 * scaleFactor,
+                                    color );
     }
 }
 
-void PathFinderGui::renderGoal( const PathFinderEnvironment& env ) const {
+void PathFinderGui::renderGoal( const PathFinderEnvironment& env, float scaleFactor ) const {
     static const ImU32 color    = ImColor{ ImVec4{ 1.0f, 0.0f, 0.0f, 1.0f }};
     const ImVec2       position = ImGui::GetCursorScreenPos();
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
     const auto& goal      = env.getGoal();
-    draw_list->AddCircleFilled( ImVec2{ goal.x + position.x, goal.y + position.y }, 5, color );
+    draw_list->AddCircleFilled( ImVec2{ goal.x * scaleFactor + position.x,
+                                        goal.y * scaleFactor + position.y },
+                                5 * scaleFactor,
+                                color );
 }
 
-void PathFinderGui::renderPlans( const PathFinderEnvironment& env ) const {
-    static const float thickness = 2.5;
-    const ImVec2       position  = ImGui::GetCursorScreenPos();
+void PathFinderGui::renderPlans( const PathFinderEnvironment& env, float scaleFactor ) const {
+    static float thickness = 2.5 * scaleFactor;
+    const ImVec2 position  = ImGui::GetCursorScreenPos();
     ImDrawList       * drawList = ImGui::GetWindowDrawList();
     for ( const Agent& agent : env.getAgents()) {
         auto p = dynamic_cast<const PathFinderAgent*>(&agent);
@@ -143,8 +155,10 @@ void PathFinderGui::renderPlans( const PathFinderEnvironment& env ) const {
         for ( auto current = previous->parent.lock();
               current;
               previous = current, current = current->parent.lock()) {
-            drawList->AddLine( ImVec2{ previous->location.x + position.x, previous->location.y + position.y },
-                               ImVec2{ current->location.x + position.x, current->location.y + position.y },
+            drawList->AddLine( ImVec2{ previous->location.x * scaleFactor + position.x,
+                                       previous->location.y * scaleFactor + position.y },
+                               ImVec2{ current->location.x * scaleFactor + position.x,
+                                       current->location.y * scaleFactor + position.y },
                                color,
                                thickness );
         }

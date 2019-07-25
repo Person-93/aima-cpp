@@ -15,9 +15,13 @@ namespace aima::traveling_salesman {
 
         static void renderInfo( gui::ImGuiWrapper& imGuiWrapper, const TravelingSalesmanEnvironment& env );
 
-        static void renderLocations( gui::ImGuiWrapper& imGuiWrapper, const TravelingSalesmanEnvironment& env );
+        static void renderLocations( gui::ImGuiWrapper& imGuiWrapper,
+                                     const TravelingSalesmanEnvironment& env,
+                                     float scale );
 
-        static void renderPlan( gui::ImGuiWrapper& imGuiWrapper, const TravelingSalesmanEnvironment& env );
+        static void renderPlan( gui::ImGuiWrapper& imGuiWrapper,
+                                const TravelingSalesmanEnvironment& env,
+                                float scale );
 
         gui::ChildWindowConfig childWindowConfig;
     };

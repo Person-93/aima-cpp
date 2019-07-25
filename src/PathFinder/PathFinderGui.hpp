@@ -24,13 +24,13 @@ namespace aima::path_finder {
 
         void renderPathArea( const aima::path_finder::PathFinderEnvironment& env, gui::ImGuiWrapper& imGuiWrapper );
 
-        void renderObstacles( const PathFinderEnvironment& env ) const;
+        void renderObstacles( const PathFinderEnvironment& env, float scaleFactor ) const;
 
-        void renderAgents( const PathFinderEnvironment& env ) const;
+        void renderAgents( const PathFinderEnvironment& env, float scaleFactor ) const;
 
-        void renderGoal( const PathFinderEnvironment& env ) const;
+        void renderGoal( const PathFinderEnvironment& env, float scaleFactor ) const;
 
-        void renderPlans( const PathFinderEnvironment& env ) const;
+        void renderPlans( const PathFinderEnvironment& env, float scaleFactor ) const;
 
         gui::ChildWindowConfig                                                          childWindowConfig;
         std::unordered_map<PathFinderEnvironment::AgentRef, ImColor, core::Agent::hash> agentColors;

@@ -34,9 +34,15 @@ void TravelingSalesmanGui::renderDisplay( aima::gui::ImGuiWrapper& imGuiWrapper,
     }
 
     renderInfo( imGuiWrapper, *env );
+
+    auto  region = ImGui::GetContentRegionAvail();
+    float xScale = region.x / 800;
+    float yScale = region.y / 600;
+    float scale  = std::min( xScale, yScale );
+    childWindowConfig.size = { 800 * scale, 600 * scale };
     imGuiWrapper.childWindow( childWindowConfig, [ & ] {
-        renderLocations( imGuiWrapper, *env );
-        renderPlan( imGuiWrapper, *env );
+        renderLocations( imGuiWrapper, *env, scale );
+        renderPlan( imGuiWrapper, *env, scale );
     } );
 }
 
@@ -67,21 +73,28 @@ void TravelingSalesmanGui::renderInfo( gui::ImGuiWrapper& imGuiWrapper, const Tr
     }
 }
 
-void TravelingSalesmanGui::renderLocations( gui::ImGuiWrapper& imGuiWrapper, const TravelingSalesmanEnvironment& env ) {
+void TravelingSalesmanGui::renderLocations( gui::ImGuiWrapper& imGuiWrapper,
+                                            const TravelingSalesmanEnvironment& env,
+                                            float scale ) {
     static const ImColor color{ 100, 225, 0 };
     static const ImColor startColor{ 0, 100, 225 };
     auto                 cursor   = ImGui::GetCursorScreenPos();
     auto                 drawList = ImGui::GetWindowDrawList();
     const auto      & locations = env.getLocations();
     for ( const auto& location: locations ) {
-        drawList->AddCircleFilled( { location.x + cursor.x + 50, location.y + cursor.y + 50 }, 3, color );
+        drawList->AddCircleFilled( { ( location.x + 50 ) * scale + cursor.x, ( location.y + 50 ) * scale + cursor.y },
+                                   3 * scale,
+                                   color );
     }
     const auto      & start     = locations.front();
-    drawList->AddCircleFilled( { start.x + cursor.x + 50, start.y + cursor.y + 50 }, 3,
+    drawList->AddCircleFilled( { ( start.x + 50 ) * scale + cursor.x, ( start.y + 50 ) * scale + cursor.y },
+                               3 * scale,
                                startColor );
 }
 
-void TravelingSalesmanGui::renderPlan( gui::ImGuiWrapper& imGuiWrapper, const TravelingSalesmanEnvironment& env ) {
+void TravelingSalesmanGui::renderPlan( gui::ImGuiWrapper& imGuiWrapper,
+                                       const TravelingSalesmanEnvironment& env,
+                                       float scale ) {
     static const ImColor color{ 100, 0, 225 };
     auto                 cursor   = ImGui::GetCursorScreenPos();
     auto                 drawList = ImGui::GetWindowDrawList();
@@ -93,9 +106,10 @@ void TravelingSalesmanGui::renderPlan( gui::ImGuiWrapper& imGuiWrapper, const Tr
         for ( size_t i = 0; i < visited.size() - 1; ++i ) {
             const auto& locationA = env.getLocations()[ visited[ i ]];
             const auto& locationB = env.getLocations()[ visited[ i + 1 ]];
-            drawList->AddLine( { locationA.x + cursor.x + 50, locationA.y + cursor.y + 50 },
-                               { locationB.x + cursor.x + 50, locationB.y + cursor.y + 50 },
-                               color );
+            drawList->AddLine( { ( locationA.x + 50 ) * scale + cursor.x, ( locationA.y + 50 ) * scale + cursor.y },
+                               { ( locationB.x + 50 ) * scale + cursor.x, ( locationB.y + 50 ) * scale + cursor.y },
+                               color,
+                               scale );
         }
     }
 }
