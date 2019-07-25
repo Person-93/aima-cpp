@@ -91,4 +91,5 @@ target_link_libraries ( geometry PRIVATE logging )
 
 add_subdirectory ( vacuum )
 add_subdirectory ( PathFinder )
+add_subdirectory ( TravelingSalesman )
 add_subdirectory ( integrated )
