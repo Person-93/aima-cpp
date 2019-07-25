@@ -2,10 +2,10 @@
 
 #include <vector>
 #include <iosfwd>
-#include "Point.hpp"
-#include "LineSegment.hpp"
+#include "util/geometry/Point.hpp"
+#include "util/geometry/LineSegment.hpp"
 
-namespace aima::path_finder {
+namespace aima::util::geometry {
 
     class Polygon {
     public:

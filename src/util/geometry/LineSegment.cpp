@@ -1,7 +1,7 @@
 #include "LineSegment.hpp"
 #include <iostream>
 
-using namespace aima::path_finder;
+using namespace aima::util::geometry;
 
 LineSegmentIterator::LineSegmentIterator( const std::vector<Point>& vector, size_t index, bool wrap ) :
         vector{ &vector }, aIndex{ index }, wrap{ wrap } {
@@ -9,7 +9,7 @@ LineSegmentIterator::LineSegmentIterator( const std::vector<Point>& vector, size
         this->vector = nullptr;
 }
 
-bool aima::path_finder::operator==( const LineSegmentIterator& a, const LineSegmentIterator& b ) {
+bool aima::util::geometry::operator==( const LineSegmentIterator& a, const LineSegmentIterator& b ) {
     return ( a.vector == nullptr && b.vector == nullptr ) ||
            ( a.vector == b.vector && a.aIndex == b.aIndex );
 }

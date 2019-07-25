@@ -2,11 +2,12 @@
 #include <numeric>
 #include <sstream>
 #include "SearchNode.hpp"
-#include "geometry.hpp"
+#include "util/geometry/geometry.hpp"
 #include "core/registerAgent.hpp"
 #include "util/define_logger.hpp"
 
 using namespace aima::path_finder;
+using aima::util::geometry::Point;
 
 AIMA_REGISTER_AGENT( PathFinderAgent, AStarAgent ); // NOLINT(cert-err58-cpp)
 

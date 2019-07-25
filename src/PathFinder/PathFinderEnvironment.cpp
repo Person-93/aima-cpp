@@ -6,8 +6,10 @@
 
 using namespace aima::core;
 using namespace aima::path_finder;
+using aima::util::geometry::Polygon;
+using aima::util::geometry::Point;
 
-DEFINE_LOGGER( PathFinderEnvironment );
+DEFINE_LOGGER( PathFinderEnvironment )
 
 PathFinderEnvironment::PathFinderEnvironment() :
         obstacles{

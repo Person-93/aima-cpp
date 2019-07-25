@@ -77,6 +77,18 @@ target_link_libraries ( app_base PRIVATE stb )
 target_link_libraries ( app_base PUBLIC imgui common )
 target_link_libraries ( app_base INTERFACE asset_manager )
 
+add_library ( geometry
+              util/geometry/Point.cpp
+              util/geometry/Point.hpp
+              util/geometry/LineSegment.cpp
+              util/geometry/LineSegment.hpp
+              util/geometry/Polygon.cpp
+              util/geometry/Polygon.hpp
+              util/geometry/geometry.hpp
+              util/geometry/geometry.cpp
+              )
+target_link_libraries ( geometry PRIVATE logging )
+
 add_subdirectory ( vacuum )
 add_subdirectory ( PathFinder )
 add_subdirectory ( integrated )

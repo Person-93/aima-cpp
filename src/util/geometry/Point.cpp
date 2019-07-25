@@ -3,6 +3,6 @@
 #include <algorithm>
 #include <iterator>
 
-std::ostream& aima::path_finder::operator<<( std::ostream& out, aima::path_finder::Point point ) {
+std::ostream& aima::util::geometry::operator<<( std::ostream& out, aima::util::geometry::Point point ) {
     return out << '(' << point.x << ',' << point.y << ')';
 }

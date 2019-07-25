@@ -1,15 +1,16 @@
 #include "PathFinderAgent.hpp"
 #include <utility>
-#include "Point.hpp"
+#include "util/geometry/Point.hpp"
 #include "util/define_logger.hpp"
 #include "core/Exception.hpp"
 #include "core/Action.hpp"
 #include "PathFinderPercept.hpp"
 #include "SearchNode.hpp"
-#include "geometry.hpp"
+#include "util/geometry/geometry.hpp"
 
 using namespace aima::core;
 using namespace aima::path_finder;
+using aima::util::geometry::Point;
 
 DEFINE_LOGGER( PathFinderAgent )
 
@@ -53,6 +54,7 @@ std::unique_ptr<Action> PathFinderAgent::execute( const Percept& percept ) {
 static bool isTriviallyReachable( const Point& start,
                                   const Point& endPoint,
                                   const PathFinderEnvironment::Obstacles& obstacles ) {
+    using namespace aima::util::geometry;
     LineSegment straightToFinish{ start, endPoint };
     return std::none_of( obstacles.begin(), obstacles.end(), [ &straightToFinish ]( const Polygon& obstacle ) {
         return isCutBy( obstacle, straightToFinish );

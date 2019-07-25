@@ -1,7 +1,7 @@
 #include "PathFinderDemo.hpp"
 #include "util/define_logger.hpp"
 #include "util/StringBuilder.hpp"
-#include "PathFinder/Point.hpp"
+#include "util/geometry/Point.hpp"
 #include "core/Exception.hpp"
 
 using namespace aima::core;

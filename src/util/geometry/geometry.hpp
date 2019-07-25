@@ -6,7 +6,7 @@
 #include "Point.hpp"
 #include "LineSegment.hpp"
 
-namespace aima::path_finder {
+namespace aima::util::geometry {
     class Polygon;
 
     std::optional<Point> lineIntersect( const LineSegment& a, const LineSegment& b );

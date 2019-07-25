@@ -11,12 +11,12 @@ namespace aima::path_finder {
         std::shared_ptr<const SearchNode> getPlan() const override { return plan; }
 
     private:
-        Generator search( Point currentLocation,
-                          Point goal,
+        Generator search( util::geometry::Point currentLocation,
+                          util::geometry::Point goal,
                           const PathFinderEnvironment::Obstacles& obstacles ) override;
 
         PathFinderAgent::Generator recursiveBestFirstSearch( const std::shared_ptr<CollapsibleSearchNode>& node,
-                                                             const Point& goal,
+                                                             const util::geometry::Point& goal,
                                                              const PathFinderEnvironment::Obstacles& obstacles,
                                                              float maxEstimateAllowed,
                                                              float& newMaxAllowed );

@@ -4,7 +4,7 @@
 #include <memory>
 #include <utility>
 #include <new>
-#include "Point.hpp"
+#include "util/geometry/Point.hpp"
 
 namespace aima::path_finder {
     /**
@@ -12,7 +12,7 @@ namespace aima::path_finder {
      */
     class SearchNode {
     public:
-        SearchNode( std::weak_ptr<SearchNode> parent, Point location, float pathCost ) :
+        SearchNode( std::weak_ptr<SearchNode> parent, util::geometry::Point location, float pathCost ) :
                 parent{ std::move( parent ) }, location{ location }, pathCost{ pathCost } {}
 
         SearchNode( const SearchNode& ) = delete;
@@ -24,7 +24,7 @@ namespace aima::path_finder {
         }
 
         std::weak_ptr<SearchNode>                       parent;
-        Point                                           location;
+        util::geometry::Point                           location;
         float                                           pathCost;
         std::unordered_set<std::shared_ptr<SearchNode>> children;
 

@@ -1,9 +1,10 @@
 #include "RecursiveBestFirstAgent.hpp"
 #include <sstream>
-#include "geometry.hpp"
+#include "util/geometry/geometry.hpp"
 #include "core/registerAgent.hpp"
 #include "util/define_logger.hpp"
 
+using aima::util::geometry::Point;
 using namespace aima::path_finder;
 
 AIMA_REGISTER_AGENT( PathFinderAgent, RecursiveBestFirstAgent ); // NOLINT(cert-err58-cpp)

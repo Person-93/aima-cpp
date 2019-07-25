@@ -3,7 +3,7 @@
 #include <vector>
 #include <iosfwd>
 
-namespace aima::path_finder {
+namespace aima::util::geometry {
     struct Point { float x; float y; };
 
     inline bool operator==( const Point& a, const Point& b ) {

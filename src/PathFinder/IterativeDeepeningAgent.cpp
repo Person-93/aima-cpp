@@ -2,14 +2,15 @@
 #include <sstream>
 #include <boost/throw_exception.hpp>
 #include "core/Action.hpp"
-#include "geometry.hpp"
+#include "util/geometry/geometry.hpp"
 #include "util/define_logger.hpp"
 #include "core/Exception.hpp"
 #include "core/registerAgent.hpp"
 
 using namespace aima::path_finder;
+using aima::util::geometry::Point;
 
-AIMA_REGISTER_AGENT( PathFinderAgent, IterativeDeepeningAgent );
+AIMA_REGISTER_AGENT( PathFinderAgent, IterativeDeepeningAgent ); // NOLINT(cert-err58-cpp)
 
 DEFINE_LOGGER( IterativeDeepeningAgent )
 

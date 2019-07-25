@@ -5,16 +5,16 @@
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <optional>
-#include "PathFinder/geometry.hpp"
-#include "PathFinder/Polygon.hpp"
+#include "util/geometry/geometry.hpp"
+#include "util/geometry/Polygon.hpp"
 
-using aima::path_finder::LineSegment;
-using aima::path_finder::Point;
-using aima::path_finder::Polygon;
+using aima::util::geometry::LineSegment;
+using aima::util::geometry::Point;
+using aima::util::geometry::Polygon;
 using namespace boost::unit_test::data;
 using boost::unit_test_framework::depends_on;
 
-namespace aima::path_finder {
+namespace aima::util::geometry {
     std::ostream& boost_test_print_type( std::ostream& out, const std::optional<Point>& point ) {
         if ( point ) {
             out << *point;
@@ -50,11 +50,11 @@ BOOST_AUTO_TEST_SUITE( geometry )
     };
 
     BOOST_DATA_TEST_CASE( isOnSegment, make( isOnSegmentData ), point, segment, expected ) {
-        BOOST_CHECK_EQUAL( aima::path_finder::isOnSegment( point, segment ), expected );
+        BOOST_CHECK_EQUAL( aima::util::geometry::isOnSegment( point, segment ), expected );
     }
 
 
-    using IntersectTestData = std::tuple<LineSegment, LineSegment, std::optional<aima::path_finder::Point>>[];
+    using IntersectTestData = std::tuple<LineSegment, LineSegment, std::optional<Point>>[];
 
     IntersectTestData lineIntersectData{
             {
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_SUITE( geometry )
     };
 
     BOOST_DATA_TEST_CASE( lineIntersect, make( lineIntersectData ), p, q, expected ) {
-        BOOST_CHECK_EQUAL( aima::path_finder::lineIntersect( p, q ), expected );
+        BOOST_CHECK_EQUAL( aima::util::geometry::lineIntersect( p, q ), expected );
     }
 
 
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_SUITE( geometry )
     BOOST_TEST_DECORATOR( *depends_on( "geometry/isOnSegment" ))
 
     BOOST_DATA_TEST_CASE( segmentIntersect, make( segmentIntersectData ), p, q, expected ) {
-        BOOST_CHECK_EQUAL( aima::path_finder::segmentIntersect( p, q ), expected );
+        BOOST_CHECK_EQUAL( aima::util::geometry::segmentIntersect( p, q ), expected );
     }
 
 
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_SUITE( geometry )
     BOOST_TEST_DECORATOR( *depends_on( "geometry/segmentIntersect" ))
 
     BOOST_DATA_TEST_CASE( isCutBy, make( isCutByData ), polygon, lineSegment, expected ) {
-        BOOST_CHECK_EQUAL( aima::path_finder::isCutBy( polygon, lineSegment ), expected );
+        BOOST_CHECK_EQUAL( aima::util::geometry::isCutBy( polygon, lineSegment ), expected );
     }
 
 BOOST_AUTO_TEST_SUITE_END() // NOLINT(cert-err58-cpp)

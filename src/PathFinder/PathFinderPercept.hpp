@@ -2,24 +2,22 @@
 
 #include <vector>
 #include "core/Percept.hpp"
-#include "Point.hpp"
+#include "util/geometry/Point.hpp"
 #include "PathFinderEnvironment.hpp"
 
 namespace aima::path_finder {
-    class Obstacle;
-
     class PathFinderPercept : public core::Percept {
     public:
         std::unique_ptr<Percept> clone() const override;
 
         PathFinderPercept( const PathFinderEnvironment::Obstacles& obstacles,
-                           Point location,
-                           Point goal ) :
+                           util::geometry::Point location,
+                           util::geometry::Point goal ) :
                 obstacles{ obstacles }, location{ location }, goal{ goal } {}
 
         const PathFinderEnvironment::Obstacles& obstacles;
-        const Point location;
-        const Point goal;
+        const util::geometry::Point location;
+        const util::geometry::Point goal;
 
     protected:
         void print( std::ostream& out ) const override;

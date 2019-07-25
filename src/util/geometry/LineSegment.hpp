@@ -3,7 +3,7 @@
 #include <iosfwd>
 #include "Point.hpp"
 
-namespace aima::path_finder {
+namespace aima::util::geometry {
     struct LineSegment { Point a, b; };
 
     std::ostream& operator<<( std::ostream& out, const LineSegment& lineSegment );

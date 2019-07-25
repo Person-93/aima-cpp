@@ -3,13 +3,13 @@
 #include <cmath>
 #include "Polygon.hpp"
 
-using namespace aima::path_finder;
+using namespace aima::util::geometry;
 
 static float determinant( float a, float b, float c, float d ) {
     return a * d - b * c;
 }
 
-std::optional<Point> aima::path_finder::lineIntersect( const LineSegment& p, const LineSegment& q ) {
+std::optional<Point> aima::util::geometry::lineIntersect( const LineSegment& p, const LineSegment& q ) {
     float detP = determinant( p.a.x, p.a.y, p.b.x, p.b.y );
     float detQ = determinant( q.a.x, q.a.y, q.b.x, q.b.y );
 
@@ -30,7 +30,7 @@ std::optional<Point> aima::path_finder::lineIntersect( const LineSegment& p, con
     return Point{ xNom / denominator, yNom / denominator };
 }
 
-std::optional<Point> aima::path_finder::segmentIntersect( const LineSegment& p, const LineSegment& q ) {
+std::optional<Point> aima::util::geometry::segmentIntersect( const LineSegment& p, const LineSegment& q ) {
     auto intersection = lineIntersect( p, q );
     if ( !intersection ) return intersection;
 
@@ -40,7 +40,7 @@ std::optional<Point> aima::path_finder::segmentIntersect( const LineSegment& p, 
     return intersection;
 }
 
-std::optional<Point> aima::path_finder::properIntersect( const LineSegment& p, const LineSegment& q ) {
+std::optional<Point> aima::util::geometry::properIntersect( const LineSegment& p, const LineSegment& q ) {
     auto intersection = segmentIntersect( p, q );
     if ( !intersection ) return intersection;
 
@@ -50,7 +50,7 @@ std::optional<Point> aima::path_finder::properIntersect( const LineSegment& p, c
     return intersection;
 }
 
-bool aima::path_finder::isOnSegment( const Point& point, const LineSegment& segment ) {
+bool aima::util::geometry::isOnSegment( const Point& point, const LineSegment& segment ) {
     auto[xMin, xMax] = std::minmax( { segment.a.x, segment.b.x } );
     auto[yMin, yMax] = std::minmax( { segment.a.y, segment.b.y } );
     return
@@ -58,11 +58,11 @@ bool aima::path_finder::isOnSegment( const Point& point, const LineSegment& segm
             point.y >= yMin && point.y <= yMax;
 }
 
-float aima::path_finder::distance( const Point& a, const Point& b ) {
+float aima::util::geometry::distance( const Point& a, const Point& b ) {
     return static_cast<float>(std::sqrt( std::pow( a.x - b.x, 2 ) + std::pow( a.y - b.y, 2 )));
 }
 
-bool aima::path_finder::isCutBy( const Polygon& polygon, const LineSegment& lineSegment ) {
+bool aima::util::geometry::isCutBy( const Polygon& polygon, const LineSegment& lineSegment ) {
     auto a = std::find( polygon.getPoints().begin(), polygon.getPoints().end(), lineSegment.a );
     auto b = std::find( polygon.getPoints().begin(), polygon.getPoints().end(), lineSegment.b );
 

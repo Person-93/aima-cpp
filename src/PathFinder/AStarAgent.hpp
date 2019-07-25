@@ -9,8 +9,8 @@ namespace aima::path_finder {
         std::shared_ptr<const SearchNode> getPlan() const override { return plan; }
 
     private:
-        Generator search( Point currentLocation,
-                          Point goal,
+        Generator search( util::geometry::Point currentLocation,
+                          util::geometry::Point goal,
                           const PathFinderEnvironment::Obstacles& obstacles ) override;
 
         std::shared_ptr<SearchNode> plan;

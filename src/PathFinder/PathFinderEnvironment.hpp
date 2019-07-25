@@ -3,8 +3,8 @@
 #include "core/Environment.hpp"
 #include <vector>
 #include <functional>
-#include "Point.hpp"
-#include "Polygon.hpp"
+#include "util/geometry/Point.hpp"
+#include "util/geometry/Polygon.hpp"
 
 namespace aima::core {
     class Agent;
@@ -18,8 +18,8 @@ namespace aima::path_finder {
     class PathFinderEnvironment : public core::Environment {
     public:
         using AgentRef       = std::reference_wrapper<const core::Agent>;
-        using AgentLocations = std::unordered_map<AgentRef, Point, core::Agent::hash>;
-        using Obstacles      = std::vector<Polygon>;
+        using AgentLocations = std::unordered_map<AgentRef, util::geometry::Point, core::Agent::hash>;
+        using Obstacles      = std::vector<util::geometry::Polygon>;
 
         PathFinderEnvironment();
 
@@ -37,17 +37,17 @@ namespace aima::path_finder {
 
         std::unique_ptr<core::Percept> getPerceptSeenBy( const core::Agent& agent ) override;
 
-        Point getAgentLocation( const core::Agent& agent ) const;
+        util::geometry::Point getAgentLocation( const core::Agent& agent ) const;
 
         const AgentLocations& getAgentLocations() const { return agentLocations; }
 
         const Obstacles& getObstacles() const { return obstacles; }
 
-        const Point& getGoal() const { return goal; }
+        const util::geometry::Point& getGoal() const { return goal; }
 
     private:
-        Obstacles      obstacles;
-        AgentLocations agentLocations;
-        Point          goal;
+        Obstacles             obstacles;
+        AgentLocations        agentLocations;
+        util::geometry::Point goal;
     };
 }

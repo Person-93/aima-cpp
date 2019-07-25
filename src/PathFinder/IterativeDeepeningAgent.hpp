@@ -27,17 +27,17 @@ namespace aima::path_finder {
         IterativeDeepeningAgent( const IterativeDeepeningAgent& other ) = default;
 
     private:
-        Generator search( Point currentLocation,
-                          Point goal,
+        Generator search( util::geometry::Point currentLocation,
+                          util::geometry::Point goal,
                           const PathFinderEnvironment::Obstacles& obstacles ) override;
 
 
         Generator iterativeDeepeningSearch( std::shared_ptr<SearchNode> node,
-                                            Point goal,
+                                            util::geometry::Point goal,
                                             const PathFinderEnvironment::Obstacles& obstacles );
 
         Generator depthLimitedSearch( const std::shared_ptr<SearchNode>& node,
-                                      Point goal,
+                                      util::geometry::Point goal,
                                       const PathFinderEnvironment::Obstacles& obstacles,
                                       size_t limit );
 

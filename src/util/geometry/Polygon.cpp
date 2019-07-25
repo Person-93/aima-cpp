@@ -3,11 +3,11 @@
 #include <iterator>
 #include "util/define_logger.hpp"
 #include "core/Exception.hpp"
-#include "geometry.hpp"
+#include "util/geometry/geometry.hpp"
 
-using namespace aima::path_finder;
+using namespace aima::util::geometry;
 
-DEFINE_LOGGER( Polygon );
+DEFINE_LOGGER( Polygon )
 
 Polygon::Polygon( std::vector<Point>&& points ) : points{ std::move( points ) } {
     if ( this->points.size() < 3 ) {
@@ -26,11 +26,11 @@ Polygon::Polygon( std::vector<Point>&& points ) : points{ std::move( points ) } 
     }
 }
 
-std::ostream& aima::path_finder::operator<<( std::ostream& out, const Polygon& polygon ) {
+std::ostream& aima::util::geometry::operator<<( std::ostream& out, const Polygon& polygon ) {
     std::copy( polygon.points.begin(), polygon.points.end(), std::ostream_iterator<Point>{ out, "," } );
     return out;
 }
 
-std::ostream& aima::path_finder::operator<<( std::ostream& out, const LineSegment& lineSegment ) {
+std::ostream& aima::util::geometry::operator<<( std::ostream& out, const LineSegment& lineSegment ) {
     return out << '(' << lineSegment.a << ',' << lineSegment.b << ')';
 }

@@ -1,12 +1,4 @@
 add_library ( path_finder_base
-              Point.cpp
-              Point.hpp
-              LineSegment.cpp
-              LineSegment.hpp
-              Polygon.cpp
-              Polygon.hpp
-              geometry.hpp
-              geometry.cpp
               PathFinderEnvironment.cpp
               PathFinderEnvironment.hpp
               PathFinderPercept.cpp
@@ -22,7 +14,7 @@ add_library ( path_finder_base
               RecursiveBestFirstAgent.cpp
               RecursiveBestFirstAgent.hpp
               )
-target_link_libraries ( path_finder_base PUBLIC common cppcoro )
+target_link_libraries ( path_finder_base PUBLIC common geometry cppcoro )
 
 add_library ( path_finder_demo_base INTERFACE )
 target_link_libraries ( path_finder_demo_base INTERFACE path_finder_base demo_base )

@@ -99,7 +99,7 @@ void PathFinderGui::renderObstacles( const PathFinderEnvironment& env ) const {
     std::vector<ImVec2> vertices;
     for ( const auto& obstacle : env.getObstacles()) {
         std::transform( obstacle.getPoints().begin(), obstacle.getPoints().end(), std::back_inserter( vertices ),
-                        [ &position ]( const Point& point ) {
+                        [ &position ]( const util::geometry::Point& point ) {
                             return ImVec2{ point.x + position.x, point.y + position.y };
                         } );
         drawList->AddConvexPolyFilled( vertices.data(), static_cast<const int>(vertices.size()), color );

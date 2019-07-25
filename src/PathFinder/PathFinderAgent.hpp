@@ -12,9 +12,11 @@ namespace aima::core {
     class Agent;
 }
 
-namespace aima::path_finder {
+namespace aima::util::geometry {
     class Point;
+}
 
+namespace aima::path_finder {
     class SearchNode;
 
     struct AgentStatus {
@@ -45,10 +47,10 @@ namespace aima::path_finder {
          * @param goal
          * @return
          */
-        static std::vector<Point>
-        triviallyReachablePoints( const Point& currentLocation,
+        static std::vector<util::geometry::Point>
+        triviallyReachablePoints( const util::geometry::Point& currentLocation,
                                   const PathFinderEnvironment::Obstacles& obstacles,
-                                  const Point& goal );
+                                  const util::geometry::Point& goal );
 
         /**
          * Creates a search node and updates the status to reflect the new search node count
@@ -58,8 +60,9 @@ namespace aima::path_finder {
          * @param cost
          * @return
          */
-        template <typename SearchNode>
-        std::shared_ptr<SearchNode> makeNode( std::weak_ptr<SearchNode> parent, Point location, float cost ) {
+        template< typename SearchNode >
+        std::shared_ptr<SearchNode>
+        makeNode( std::weak_ptr<SearchNode> parent, util::geometry::Point location, float cost ) {
             status.access( []( AgentStatus& status ) {
                 ++status.nodesInMemory;
                 status.maxNodesInMemory = std::max( status.maxNodesInMemory, status.nodesInMemory );
@@ -81,8 +84,8 @@ namespace aima::path_finder {
         using Generator = cppcoro::recursive_generator<SearchResults>;
 
     private:
-        virtual Generator search( Point currentLocation,
-                                  Point goal,
+        virtual Generator search( util::geometry::Point currentLocation,
+                                  util::geometry::Point goal,
                                   const PathFinderEnvironment::Obstacles& obstacles ) = 0;
 
         util::ThreadSafeWrapper<AgentStatus> status{};

@@ -4,7 +4,7 @@
 #include <string_view>
 #include <unordered_map>
 #include "PathFinderEnvironment.hpp"
-#include "Point.hpp"
+#include "util/geometry/Point.hpp"
 
 namespace aima::path_finder {
     class PathFinderGui final : public viewer::GraphicViewer {
