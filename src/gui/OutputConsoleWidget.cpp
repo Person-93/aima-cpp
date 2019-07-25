@@ -19,7 +19,12 @@ OutputConsoleBuffer::OutputConsoleBuffer( ThreadSafeBool& outputPastDisplay, Thr
 int OutputConsoleBuffer::sync() {
     TRACE;
 
-    *display += str();
+    display->access( [ this ]( std::string& string ) {
+        string += str();
+        if ( string.size() >= 1024 * 1024 ) {
+            string.erase( 0, str().size());
+        }
+    } );
     str( "" );
     *outputPastDisplay = true;
     return 0;
