@@ -28,7 +28,7 @@ add_library ( common
               util/type_traits.hpp
               util/UniqueIdMixin.hpp
               )
-target_link_libraries ( common PUBLIC version logging atomic Threads::Threads )
+target_link_libraries ( common PUBLIC version logging atomic Threads::Threads cppcoro )
 
 add_library ( imgui
               gui/ImGuiWrapper.hpp

@@ -7,7 +7,7 @@ add_library ( traveling_salesman_base
               IterativeLengtheningAgent.hpp
               SearchNode.hpp
               )
-target_link_libraries ( traveling_salesman_base PUBLIC common geometry cppcoro )
+target_link_libraries ( traveling_salesman_base PUBLIC common geometry )
 
 add_library ( traveling_salesman_app_base
               TravelingSalesmanGui.cpp
