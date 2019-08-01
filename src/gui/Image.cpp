@@ -65,9 +65,21 @@ void Image::makeTexture( ImGuiWrapper&, bool remake ) {
 
     LOG4CPLUS_DEBUG( GetLogger(), "Making texture from image at " << static_cast<void*>(data));
 
+    GLuint glChannels;
+    switch ( channels_ ) {
+        case STBI_rgb: glChannels = GL_RGB;
+            break;
+        case STBI_rgb_alpha: glChannels = GL_RGBA;
+            break;
+        default: {
+            using namespace aima::core::exception;
+            AIMA_THROW_EXCEPTION( Exception{} << Because{ "Unable to load image: unrecognized number of channels" } );
+        }
+    }
+
     glGenTextures( 1, &texture_ );
     glBindTexture( GL_TEXTURE_2D, texture_ );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, width_, height_, 0, GL_RGB, GL_UNSIGNED_BYTE, data );
+    glTexImage2D( GL_TEXTURE_2D, 0, glChannels, width_, height_, 0, glChannels, GL_UNSIGNED_BYTE, data );
     glGenerateMipmap( GL_TEXTURE_2D );
 }
 
