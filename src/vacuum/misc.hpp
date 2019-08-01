@@ -18,6 +18,10 @@ namespace aima::vacuum {
     inline bool operator==( const Location& a, const Location& b ) noexcept {
         return a.x == b.x && a.y == b.y;
     }
+
+    inline bool operator!=( const Location& a, const Location& b ) noexcept {
+        return !( a == b );
+    }
 }
 
 namespace std {
