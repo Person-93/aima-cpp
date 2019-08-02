@@ -4,6 +4,7 @@
 #include <string>
 #include <boost/numeric/ublas/matrix.hpp>
 #include "vacuum/BasicVacuumEnvironment.hpp"
+#include "vacuum/SearchBasedAgent.hpp"
 #include "core/Agent.hpp"
 #include "core/Exception.hpp"
 #include "gui/ImGuiWrapper.hpp"
@@ -21,7 +22,7 @@ using namespace aima::core;
 using namespace aima::vacuum;
 using std::string_view;
 
-DEFINE_LOGGER( VacuumGui );
+DEFINE_LOGGER( VacuumGui )
 
 
 namespace {
@@ -32,7 +33,8 @@ namespace {
     }
 
     namespace Images {
-        static const std::string_view DUSTY_BACKGROUND = "DUSTY_BACKGROUND";
+        constexpr std::string_view DUSTY_BACKGROUND = "DUSTY_BACKGROUND";
+        constexpr std::string_view TARGET           = "TARGET";
     }
 
     using ImageData = std::map<std::string_view, const std::filesystem::path>;
@@ -40,7 +42,7 @@ namespace {
     ImageData& imageData() {
         static ImageData data{
                 { Images::DUSTY_BACKGROUND, "dusty.jpg" },
-
+                { Images::TARGET,           "target.png" },
         };
         return data;
     }
@@ -113,6 +115,15 @@ void VacuumGui::renderPerformanceMeasure( BasicVacuumEnvironment& environment ) 
     ImGui::Text( "%s", std::move( stringBuilder ).toString().c_str());
 }
 
+namespace {
+    ImVec2 calculateCenterOfLocation( const Location& location, const ImVec2& cursor, float boxSize ) {
+        return {
+                cursor.x + location.x * boxSize + boxSize / 2,
+                cursor.y + location.y * boxSize + boxSize / 2,
+        };
+    }
+}
+
 void VacuumGui::renderGrid( const BasicVacuumEnvironment& environment ) {
     TRACE;
 
@@ -122,14 +133,73 @@ void VacuumGui::renderGrid( const BasicVacuumEnvironment& environment ) {
     float  boxSize     = boxSpace * .95f;
     float  borderWidth = boxSpace * .05f;
     ImDrawList* drawList = ImGui::GetWindowDrawList();
-    ImU32 bgColor = ImColor(( ImGui::GetStyle().Colors[ ImGuiCol_ChildBg ] ));
-    ImU32 col     = ~bgColor;
+
 
     const auto& locations = environment.getLocations();
 
-    // render grid cells
-    auto       cursor = ImGui::GetCursorScreenPos();
-    for ( auto i      = locations.cbegin1(), end1 = locations.cend1(); i != end1; ++i ) {
+    auto cursor = ImGui::GetCursorScreenPos();
+    renderGridCells( boxSize, borderWidth, drawList, locations, cursor );
+
+    for ( const auto&[agent, state]: environment.getAgentStates()) {
+        const auto& location = state.location;
+        renderAgentPlan( boxSize, drawList, cursor, agent, location );
+        renderAgent( boxSize, drawList, cursor, state, location );
+
+    }
+}
+
+void VacuumGui::renderAgent( float boxSize,
+                             ImDrawList* drawList,
+                             const ImVec2& cursor,
+                             const BasicVacuumEnvironment::AgentState& state,
+                             const Location& location ) const {// render agents as circles in the center of their location
+    ImVec2               circleOrigin = calculateCenterOfLocation( location, cursor, boxSize );
+    static const ImColor agentColor( 255, 0, 0 );
+    drawList->AddCircleFilled( circleOrigin, boxSize / 3, agentColor, 48 );
+    if ( state.sucking ) {
+        ImVec2 cornerA( circleOrigin.x - boxSize / 6, circleOrigin.y - boxSize / 6 );
+        ImVec2 cornerB( circleOrigin.x + boxSize / 6, circleOrigin.y + boxSize / 6 );
+        drawList->AddImage( dustyTexture, cornerA, cornerB );
+    }
+}
+
+void VacuumGui::renderAgentPlan( float boxSize,
+                                 ImDrawList* drawList,
+                                 const ImVec2& cursor,
+                                 const Agent& agent,
+                                 const Location& location ) const {
+    if ( !agent.isAlive()) return;
+    auto p = dynamic_cast<const SearchBasedAgent*>(&agent);
+    if ( !p ) return;
+
+    // if agent is still in planning stage, render plan, otherwise render next stop
+    if ( auto destination = p->nextStop(); !destination ) {
+        // render little circles at the way-points with lines connecting them
+        static const ImColor  planColor{ 0, 225, 100 };
+        std::optional<ImVec2> previousCenter;
+        for ( auto            plan = p->getPlan(); plan; plan = plan->parent ) {
+            ImVec2 locationCenter = calculateCenterOfLocation( plan->location, cursor, boxSize );
+            drawList->AddCircleFilled( locationCenter, boxSize / 6, planColor );
+            if ( previousCenter )
+                drawList->AddLine( locationCenter, *previousCenter, planColor );
+            previousCenter = locationCenter;
+        }
+    }
+    else if ( *destination != location ) {
+        ImVec2 cornerA{ cursor.x + destination->x * boxSize, cursor.y + location.y * boxSize };
+        ImVec2 cornerB{ cornerA.x + boxSize, cornerA.y + boxSize };
+        drawList->AddImage( targetTexture, cornerA, cornerB );
+    }
+}
+
+void VacuumGui::renderGridCells( float boxSize,
+                                 float borderWidth,
+                                 ImDrawList* drawList,
+                                 const BasicVacuumEnvironment::Locations& locations,
+                                 const ImVec2& cursor ) const {
+    ImU32      bgColor = ImColor(( ImGui::GetStyle().Colors[ ImGuiCol_ChildBg ] ));
+    ImU32      col     = ~bgColor;
+    for ( auto i       = locations.cbegin1(), end1 = locations.cend1(); i != end1; ++i ) {
         for ( auto j = i.cbegin(), end2 = i.cend(); j != end2; ++j ) {
             ImVec2 cornerA( cursor.x + j.index1() * boxSize, cursor.y + j.index2() * boxSize );
             ImVec2 cornerB( cornerA.x + boxSize, cornerA.y + boxSize );
@@ -138,24 +208,16 @@ void VacuumGui::renderGrid( const BasicVacuumEnvironment& environment ) {
         }
         ImGui::SameLine();
     }
-
-    // render agents as circles in the center of their location
-    for ( const auto&[agent, state]: environment.getAgentStates()) {
-        const auto& location = state.location;
-        ImVec2               circleOrigin( cursor.x + location.x * boxSize + boxSize / 2,
-                                           cursor.y + location.y * boxSize + boxSize / 2 );
-        static const ImColor agentColor( 255, 0, 0 );
-        drawList->AddCircleFilled( circleOrigin, boxSize / 3, agentColor, 24 );
-        if ( state.sucking ) {
-            ImVec2 cornerA( circleOrigin.x - boxSize / 6, circleOrigin.y - boxSize / 6 );
-            ImVec2 cornerB( circleOrigin.x + boxSize / 6, circleOrigin.y + boxSize / 6 );
-            drawList->AddImage( dustyTexture, cornerA, cornerB );
-        }
-    }
 }
 
 void VacuumGui::initMethod( aima::gui::ImGuiWrapper& imGuiWrapper ) {
-    auto& dustyImage = aima::util::AssetManager::get<gui::Image>( Images::DUSTY_BACKGROUND );
+    using aima::util::AssetManager::get;
+
+    auto& dustyImage = get<gui::Image>( Images::DUSTY_BACKGROUND );
     dustyImage.makeTexture( imGuiWrapper );
     dustyTexture = reinterpret_cast<ImTextureID> (dustyImage.texture());
+
+    auto& targetImage = get<gui::Image>( Images::TARGET );
+    targetImage.makeTexture( imGuiWrapper );
+    targetTexture = reinterpret_cast<ImTextureID>(targetImage.texture());
 }

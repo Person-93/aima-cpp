@@ -3,6 +3,7 @@
 #include <memory>
 #include <string_view>
 #include "views/GraphicViewer.hpp" // IWYU pragma: export
+#include "BasicVacuumEnvironment.hpp"
 
 namespace aima::core { class Environment; }
 namespace aima::gui { struct ImGuiWrapper; }
@@ -29,8 +30,27 @@ namespace aima::vacuum {
 
         void renderGrid( const BasicVacuumEnvironment& environment );
 
-        std::string littleBuffer;
-        std::string bigBuffer;
-        ImTextureID dustyTexture;
+        void renderGridCells( float boxSize,
+                              float borderWidth,
+                              ImDrawList* drawList,
+                              const BasicVacuumEnvironment::Locations& locations,
+                              const ImVec2& cursor ) const;
+
+        void renderAgentPlan( float boxSize,
+                              ImDrawList* drawList,
+                              const ImVec2& cursor,
+                              const core::Agent& agent,
+                              const Location& location ) const;
+
+        void renderAgent( float boxSize,
+                          ImDrawList* drawList,
+                          const ImVec2& cursor,
+                          const BasicVacuumEnvironment::AgentState& state,
+                          const Location& location ) const;
+
+        std::string littleBuffer{};
+        std::string bigBuffer{};
+        ImTextureID dustyTexture{};
+        ImTextureID targetTexture{};
     };
 }
