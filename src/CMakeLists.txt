@@ -49,7 +49,7 @@ add_library ( asset_manager
               util/asset_manager/AssetHandle.cpp
               )
 target_link_libraries ( asset_manager PRIVATE SQLite )
-target_link_libraries ( asset_manager PUBLIC common c++fs )
+target_link_libraries ( asset_manager PUBLIC common )
 
 add_library ( demo_base
               core/Demo.cpp

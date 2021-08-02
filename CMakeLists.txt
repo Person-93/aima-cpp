@@ -34,8 +34,8 @@ if ( AIMA_ENABLE_TESTING )
     set ( BOOST_MODULES unit_test_framework )
 endif ()
 
-add_compile_options ( --stdlib=libc++ -fcoroutines-ts )
-add_link_options ( --stdlib=libc++ -lc++abi )
+add_compile_options ( -stdlib=libc++ -fcoroutines-ts )
+add_link_options ( --stdlib=libc++ -lc++abi -lc++fs )
 
 find_package ( Threads REQUIRED )
 find_package ( Boost REQUIRED ${BOOST_MODULES} )

@@ -9,8 +9,8 @@ add_library ( vacuum_base
               LocalVacuumEnvironmentPercept.hpp
               GlobalVacuumEnvironmentPercept.cpp
               GlobalVacuumEnvironmentPercept.hpp
-              GlobalVacuumEnvironmentPercept.cpp
-              GlobalVacuumEnvironmentPercept.hpp
+              SearchBasedAgent.cpp
+              SearchBasedAgent.hpp
               VisibleVacuumEnvironment.cpp
               VisibleVacuumEnvironment.hpp
               misc.cpp
@@ -48,8 +48,6 @@ target_link_libraries ( reflex_vacuum_app PUBLIC vacuum_app_base )
 
 add_integratable_executable ( search_vacuum_app APP CLASS SearchVacuumApp )
 target_sources ( search_vacuum_app PUBLIC
-                 SearchBasedAgent.cpp
-                 SearchBasedAgent.hpp
                  IterativeLengtheningAgent.cpp
                  IterativeLengtheningAgent.hpp
                  )
