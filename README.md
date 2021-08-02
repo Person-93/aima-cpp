@@ -9,8 +9,12 @@ Uses the following system libraries:
 * SQLite3
 * OpenGL
 * glfw
+* clang std
+* clang abi
 
 Clone the repo recursively and run cmake. Build all or choose which executables you want.
+
+MUST be built with clang. Currently setup for clang 7, to build with a later version, configure the project. This will build the cppcoro dependency. Check the name of the compiled library in the build tree and update vendor/CMakeLists.txt accordingly. This is necessary because cppcoro uses a differnt build system that renames the output depending on the compiler used.
 
 ## Running
 
